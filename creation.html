@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开始创作 · 品牌AI内容工厂</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-muted: #86868b;
+  --primary: #0071e3;
+  --primary-hover: #0077ed;
+  --accent: #a855f7;
+  --accent2: #ec4899;
+  --border: #d2d2d7;
+  --border-light: #e5e5ea;
+  --radius: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+
+  /* RHC 品牌色调 */
+  --rhc-purple: #8b5cf6;
+  --rhc-pink: #ec4899;
+  --rhc-blue: #6366f1;
+  --rhc-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--rhc-gradient);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.logo-text { font-size: 15px; font-weight: 700; }
+.logo-sub { font-size: 11px; color: var(--text-muted); }
+
+.nav { padding: 12px 0; flex: 1; overflow-y: auto; }
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 20px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 0;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.nav-item:hover { background: var(--bg); color: var(--text); }
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(139,92,246,0.1) 0%, rgba(99,102,241,0.05) 100%);
+  color: var(--rhc-purple);
+  font-weight: 600;
+  border-left: 3px solid var(--rhc-purple);
+}
+
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* ========== MAIN CONTENT ========== */
+.main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.topbar {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(236,72,153,0.08));
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rhc-purple);
+}
+
+.brand-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--rhc-gradient);
+  border-radius: 50%;
+}
+
+/* ========== CREATION STAGE ========== */
+.creation-stage {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 48px 32px;
+  gap: 32px;
+}
+
+/* hero area */
+.hero {
+  text-align: center;
+  max-width: 600px;
+}
+
+.hero-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rhc-purple);
+  background: rgba(139,92,246,0.08);
+  border: 1px solid rgba(139,92,246,0.15);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+
+.hero h1 {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  background: var(--rhc-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+
+.hero p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ========== PROMPT BOX ========== */
+.prompt-container {
+  width: 100%;
+  max-width: 720px;
+}
+
+.prompt-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.prompt-box:focus-within {
+  border-color: var(--rhc-purple);
+  box-shadow: 0 0 0 4px rgba(139,92,246,0.12), var(--shadow-lg);
+}
+
+.prompt-textarea {
+  width: 100%;
+  padding: 20px 24px 12px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  resize: none;
+  background: transparent;
+  line-height: 1.6;
+  min-height: 100px;
+}
+
+.prompt-textarea::placeholder { color: var(--text-muted); }
+
+.prompt-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.prompt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.action-chip:hover {
+  border-color: var(--rhc-purple);
+  color: var(--rhc-purple);
+  background: rgba(139,92,246,0.05);
+}
+
+.action-chip.active {
+  border-color: var(--rhc-purple);
+  color: var(--rhc-purple);
+  background: rgba(139,92,246,0.08);
+  font-weight: 600;
+}
+
+.generate-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--rhc-gradient);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(139,92,246,0.35);
+}
+
+.generate-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(139,92,246,0.45);
+}
+
+.generate-btn:active { transform: translateY(0); }
+
+.generate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ========== QUICK PROMPTS ========== */
+.quick-prompts {
+  width: 100%;
+  max-width: 720px;
+}
+
+.quick-prompts-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.quick-prompts-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-chip {
+  padding: 7px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.quick-chip:hover {
+  border-color: var(--rhc-purple);
+  color: var(--rhc-purple);
+  background: rgba(139,92,246,0.04);
+}
+
+/* ========== ASSET LIBRARY PANEL ========== */
+.asset-panel {
+  width: 100%;
+  max-width: 720px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.asset-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  user-select: none;
+}
+
+.asset-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.asset-panel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: white;
+  background: var(--rhc-gradient);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.asset-panel-toggle {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.asset-panel-toggle.open { transform: rotate(180deg); }
+
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 16px 20px 20px;
+}
+
+.asset-card {
+  border: 2px solid var(--border-light);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: var(--bg);
+}
+
+.asset-card:hover {
+  border-color: var(--rhc-purple);
+  box-shadow: 0 4px 16px rgba(139,92,246,0.15);
+  transform: translateY(-2px);
+}
+
+.asset-card.selected {
+  border-color: var(--rhc-purple);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.2);
+}
+
+.asset-card img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.asset-card-label {
+  padding: 6px 8px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-top: 1px solid var(--border-light);
+}
+
+.asset-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  background: var(--rhc-gradient);
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.asset-card.selected .asset-check { display: flex; }
+
+/* ========== GENERATION RESULT ========== */
+.result-area {
+  width: 100%;
+  max-width: 720px;
+  display: none;
+}
+
+.result-area.show { display: block; }
+
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.result-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34c759;
+}
+
+.status-dot.loading {
+  background: var(--rhc-purple);
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.result-body {
+  padding: 20px;
+}
+
+.result-prompt-out {
+  background: linear-gradient(135deg, rgba(99,102,241,0.04), rgba(139,92,246,0.04));
+  border: 1px solid rgba(139,92,246,0.1);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+}
+
+.result-image-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.result-sku-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.result-sku-chip img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.result-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.result-btn:hover { background: var(--surface); border-color: var(--rhc-purple); color: var(--rhc-purple); }
+
+.result-btn.primary {
+  background: var(--rhc-gradient);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(139,92,246,0.3);
+}
+
+.result-btn.primary:hover { opacity: 0.9; color: white; }
+
+/* ========== GENERATION PROGRESS ========== */
+.progress-bar-wrap {
+  height: 3px;
+  background: var(--border-light);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--rhc-gradient);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ========== LOADING SKELETON ========== */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f2 25%, #e8e8ec 50%, #f0f0f2 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ========== SCROLLBAR ========== */
+.creation-stage::-webkit-scrollbar { width: 6px; }
+.creation-stage::-webkit-scrollbar-track { background: transparent; }
+.creation-stage::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">✦</div>
+      <div>
+        <div class="logo-text">品牌内容工厂</div>
+        <div class="logo-sub">AI-Powered Brand Studio</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div class="nav-section-label">工作台</div>
+    <a href="index.html" class="nav-item">
+      <span class="nav-icon">⊞</span> 首页概览
+    </a>
+    <a href="creation.html" class="nav-item active">
+      <span class="nav-icon">✦</span> 开始创作
+    </a>
+
+    <div class="nav-section-label" style="margin-top:12px;">资产管理</div>
+    <a href="index.html#assets" class="nav-item">
+      <span class="nav-icon">◫</span> 素材库
+    </a>
+    <a href="index.html#brands" class="nav-item">
+      <span class="nav-icon">◈</span> 品牌管理
+    </a>
+
+    <div class="nav-section-label" style="margin-top:12px;">生产</div>
+    <a href="index.html#tasks" class="nav-item">
+      <span class="nav-icon">▷</span> 任务队列
+    </a>
+    <a href="index.html#history" class="nav-item">
+      <span class="nav-icon">◷</span> 历史记录
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title">开始创作</div>
+    <div class="topbar-brand">
+      <div class="brand-dot"></div>
+      人源活力® · RHC 光子瓶
+    </div>
+  </div>
+
+  <!-- Creation Stage -->
+  <div class="creation-stage">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-label">✦ AI Brand Studio</div>
+      <h1>描述你想要的内容</h1>
+      <p>输入你的创意想法，AI 将结合人源活力品牌资产，<br>为你生成专业视频脚本和 Seedance 提示词。</p>
+    </div>
+
+    <!-- Prompt Input -->
+    <div class="prompt-container">
+      <div class="prompt-box">
+        <textarea
+          class="prompt-textarea"
+          id="promptInput"
+          placeholder="例如：为光子瓶制作一个15秒的小红书种草视频，突出产品的紫粉渐变瓶身，展示使用前后肤色变化..."
+          rows="4"
+          oninput="onPromptInput()"
+        ></textarea>
+        <div class="prompt-footer">
+          <div class="prompt-actions">
+            <div class="action-chip" id="chipVideo" onclick="toggleMode('video')">🎬 视频脚本</div>
+            <div class="action-chip" id="chipImage" onclick="toggleMode('image')">🖼️ 图文种草</div>
+            <div class="action-chip" id="chipShort" onclick="toggleMode('short')">⚡ 短视频</div>
+          </div>
+          <button class="generate-btn" id="generateBtn" onclick="generate()" disabled>
+            <span>生成</span>
+            <span>→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Prompts -->
+    <div class="quick-prompts">
+      <div class="quick-prompts-label">💡 快速开始</div>
+      <div class="quick-prompts-grid">
+        <div class="quick-chip" onclick="fillPrompt('光子瓶15秒小红书种草，突出紫粉渐变瓶身质感，手持展示，氛围感打光')">🌸 小红书种草</div>
+        <div class="quick-chip" onclick="fillPrompt('蒙娜丽莎使用前后对比，暗沉皮肤→透亮光感，戏剧性转变，15秒竖屏')">🎭 前后对比</div>
+        <div class="quick-chip" onclick="fillPrompt('精华液滴落特写，慢镜头微距，光线折射，科技感，展示产品质地')">💧 产品特写</div>
+        <div class="quick-chip" onclick="fillPrompt('白领女性早晨护肤routine，光子瓶作为核心步骤，温柔日系风格')">🌅 场景种草</div>
+        <div class="quick-chip" onclick="fillPrompt('成分可视化：蛋白酶在皮肤表面作用的科技动画，配合真实产品展示')">🔬 成分故事</div>
+        <div class="quick-chip" onclick="fillPrompt('开箱视频，高端礼盒拆封，光子瓶出镜，奢侈品质感拍摄风格')">🎁 开箱礼盒</div>
+      </div>
+    </div>
+
+    <!-- Asset Library Panel -->
+    <div class="asset-panel" id="assetPanel">
+      <div class="asset-panel-header" onclick="toggleAssetPanel()">
+        <div class="asset-panel-title">
+          <span>📦</span>
+          <span>已关联资产库</span>
+          <div class="asset-panel-badge">人源活力® · 4 SKU图</div>
+        </div>
+        <div class="asset-panel-toggle open" id="assetToggle">▾</div>
+      </div>
+      <div id="assetGrid" class="asset-grid">
+        <div class="asset-card" id="asset-01" onclick="toggleAsset('01')">
+          <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120549766529029/01-studio-front.png" alt="棚拍正面" loading="lazy" />
+          <div class="asset-card-label">01 · 棚拍正面</div>
+          <div class="asset-check">✓</div>
+        </div>
+        <div class="asset-card" id="asset-02" onclick="toggleAsset('02')">
+          <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120562164891663/02-closeup-front.png" alt="近距正面" loading="lazy" />
+          <div class="asset-card-label">02 · 近距正面</div>
+          <div class="asset-check">✓</div>
+        </div>
+        <div class="asset-card" id="asset-03" onclick="toggleAsset('03')">
+          <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120578925330437/03-side-angle.png" alt="侧面角度" loading="lazy" />
+          <div class="asset-card-label">03 · 侧面角度</div>
+          <div class="asset-check">✓</div>
+        </div>
+        <div class="asset-card" id="asset-04" onclick="toggleAsset('04')">
+          <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120595870318607/04-handheld.png" alt="手持展示" loading="lazy" />
+          <div class="asset-card-label">04 · 手持展示</div>
+          <div class="asset-check">✓</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Area -->
+    <div class="result-area" id="resultArea">
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-status">
+            <div class="status-dot loading" id="statusDot"></div>
+            <span id="statusText">正在生成...</span>
+          </div>
+          <div id="progressWrap" class="progress-bar-wrap" style="flex:1; margin-left:16px;">
+            <div class="progress-bar" id="progressBar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="result-body" id="resultBody">
+          <div class="skeleton" style="height:18px;width:60%;margin-bottom:10px;"></div>
+          <div class="skeleton" style="height:14px;width:90%;margin-bottom:8px;"></div>
+          <div class="skeleton" style="height:14px;width:75%;margin-bottom:8px;"></div>
+          <div class="skeleton" style="height:14px;width:82%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- spacer -->
+    <div style="height:40px;"></div>
+  </div>
+</div>
+
+<script>
+// ========== STATE ==========
+let selectedMode = null;
+let selectedAssets = new Set();
+let isGenerating = false;
+
+const assetMeta = {
+  '01': { label: '棚拍正面', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120549766529029/01-studio-front.png' },
+  '02': { label: '近距正面', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120562164891663/02-closeup-front.png' },
+  '03': { label: '侧面角度', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120578925330437/03-side-angle.png' },
+  '04': { label: '手持展示', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120595870318607/04-handheld.png' },
+};
+
+// ========== PROMPT INPUT ==========
+function onPromptInput() {
+  const val = document.getElementById('promptInput').value.trim();
+  document.getElementById('generateBtn').disabled = val.length === 0;
+}
+
+function fillPrompt(text) {
+  document.getElementById('promptInput').value = text;
+  onPromptInput();
+  document.getElementById('promptInput').focus();
+}
+
+// ========== MODE TOGGLE ==========
+function toggleMode(mode) {
+  if (selectedMode === mode) {
+    selectedMode = null;
+    document.getElementById('chip' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.remove('active');
+  } else {
+    ['video','image','short'].forEach(m => {
+      document.getElementById('chip' + m.charAt(0).toUpperCase() + m.slice(1)).classList.remove('active');
+    });
+    selectedMode = mode;
+    document.getElementById('chip' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+  }
+}
+
+// ========== ASSET TOGGLE ==========
+function toggleAsset(id) {
+  const card = document.getElementById('asset-' + id);
+  if (selectedAssets.has(id)) {
+    selectedAssets.delete(id);
+    card.classList.remove('selected');
+  } else {
+    selectedAssets.add(id);
+    card.classList.add('selected');
+  }
+}
+
+function toggleAssetPanel() {
+  const grid = document.getElementById('assetGrid');
+  const toggle = document.getElementById('assetToggle');
+  if (grid.style.display === 'none') {
+    grid.style.display = 'grid';
+    toggle.classList.add('open');
+  } else {
+    grid.style.display = 'none';
+    toggle.classList.remove('open');
+  }
+}
+
+// ========== GENERATE ==========
+function generate() {
+  if (isGenerating) return;
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (!prompt) return;
+
+  isGenerating = true;
+  document.getElementById('generateBtn').disabled = true;
+
+  // Show result area
+  const resultArea = document.getElementById('resultArea');
+  resultArea.classList.add('show');
+  resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Reset
+  document.getElementById('statusDot').className = 'status-dot loading';
+  document.getElementById('statusText').textContent = '正在生成...';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('resultBody').innerHTML = `
+    <div class="skeleton" style="height:18px;width:60%;margin-bottom:10px;"></div>
+    <div class="skeleton" style="height:14px;width:90%;margin-bottom:8px;"></div>
+    <div class="skeleton" style="height:14px;width:75%;margin-bottom:8px;"></div>
+    <div class="skeleton" style="height:14px;width:82%;"></div>
+  `;
+
+  // Fake progress
+  let prog = 0;
+  const progTimer = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 18, 85);
+    document.getElementById('progressBar').style.width = prog + '%';
+  }, 400);
+
+  // Build output based on mode + prompt
+  const mode = selectedMode || 'video';
+  const assets = Array.from(selectedAssets);
+
+  setTimeout(() => {
+    clearInterval(progTimer);
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('statusDot').className = 'status-dot';
+    document.getElementById('statusText').textContent = '生成完成 ✓';
+
+    const output = buildOutput(prompt, mode, assets);
+    document.getElementById('resultBody').innerHTML = output;
+
+    isGenerating = false;
+    document.getElementById('generateBtn').disabled = false;
+  }, 2400);
+}
+
+function buildOutput(prompt, mode, assets) {
+  const modeLabel = { video: '🎬 Seedance 视频提示词', image: '🖼️ 图文种草文案', short: '⚡ 短视频脚本' }[mode] || '🎬 Seedance 视频提示词';
+
+  // Selected asset chips
+  let assetChips = '';
+  const assetKeys = assets.length > 0 ? assets : ['01'];
+  assetKeys.forEach(id => {
+    const a = assetMeta[id];
+    if (a) {
+      assetChips += `<div class="result-sku-chip"><img src="${a.url}" alt="${a.label}"/>${a.label}</div>`;
+    }
+  });
+
+  // Build a structured prompt
+  const generatedPrompt = buildSeedancePrompt(prompt, mode, assetKeys);
+
+  return `
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">${modeLabel}</div>
+    <div class="result-prompt-out">${generatedPrompt}</div>
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">📦 关联素材</div>
+    <div class="result-image-row">${assetChips}</div>
+    <div class="result-actions">
+      <button class="result-btn primary" onclick="copyResult()">📋 复制提示词</button>
+      <button class="result-btn" onclick="refine()">✦ 优化</button>
+      <button class="result-btn" onclick="resetResult()">↺ 重新生成</button>
+    </div>
+  `;
+}
+
+function buildSeedancePrompt(userPrompt, mode, assets) {
+  const assetDesc = assets.includes('04') ? 'hand-held product shot with visible label'
+    : assets.includes('01') ? 'studio product shot, warm bokeh background'
+    : assets.includes('03') ? 'side-angle shot showing bubble texture layer'
+    : 'close-up product shot on white surface';
+
+  if (mode === 'image') {
+    return `📝 小红书图文种草文案\n\n【标题】：比精华更精华！这瓶光子瓶让我皮肤的毛孔都哭了👏\n\n【正文】：\n真的被这瓶「人源活力 光子瓶」拿捏了！\n紫粉渐变的瓶身，一看就很高级～\n最近换季皮肤超干，用了一周已经不一样了！\n蛋白酶成分真的会让皮肤变透！\n\n配上你的创意：「${userPrompt}」\n\n#护肤 #精华液 #人源活力 #光子瓶 #护肤推荐`;
+  }
+
+  if (mode === 'short') {
+    return `🎬 短视频脚本 (15s)\n\n第0-3秒：产品特写开场\n镜头：${assetDesc}\n描述：光子瓶棚拍，紫粉渐变色泽，暖光打亮\n\n第4-10秒：使用场景\n${userPrompt}\n镜头：手持滴管，精华液落于掌心，慢镜头\n\n第11-15秒：效果呈现 + CTA\n画面：对比切换，Logo定格\n文案：人源活力®  肌肤焕新蛋白酶精华`;
+  }
+
+  // default: video / seedance prompt
+  return `Seedance 2.0 提示词\n\nA ${assetDesc} of RHC Skin Renewal Protease Essence (光子瓶), featuring a translucent frosted glass dropper bottle with purple-to-pink gradient. ${userPrompt} Cinematic product photography, soft key light with warm bokeh, ultra-high definition, 9:16 vertical format, luxury skincare aesthetic, no text overlays. Camera: slow push-in, shallow depth of field.\n\n参考图：光子瓶素材 ${assets.map(id => '#' + id).join(', ') || '#01'}\n平台：抖音 / 小红书\n时长：15s`;
+}
+
+function copyResult() {
+  const text = document.querySelector('.result-prompt-out')?.textContent || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ 已复制';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+function refine() {
+  const currentPrompt = document.getElementById('promptInput').value;
+  document.getElementById('promptInput').value = currentPrompt + '，更具视觉冲击力，突出产品质感';
+  generate();
+}
+
+function resetResult() {
+  document.getElementById('resultArea').classList.remove('show');
+  document.getElementById('promptInput').value = '';
+  document.getElementById('generateBtn').disabled = true;
+}
+</script>
+</body>
+</html>

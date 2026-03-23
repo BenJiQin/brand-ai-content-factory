@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchKey</Code>
+  <Message>The specified key does not exist.</Message>
+  <RequestId>699E8A5E28E012333972925E</RequestId>
+  <HostId>xp-static.oss-cn-hangzhou.aliyuncs.com</HostId>
+  <Key>xp-fe/mainline/homepage_2024/assets/g9-hero.jpg</Key>
+  <EC>0026-00000001</EC>
+  <RecommendDoc>https://api.aliyun.com/troubleshoot?q=0026-00000001</RecommendDoc>
+</Error>
