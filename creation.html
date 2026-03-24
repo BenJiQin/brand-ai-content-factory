@@ -5,112 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>开始创作 · 品牌AI内容工厂</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/design-system.css">
 <style>
 :root {
-  --bg: #f5f5f7;
-  --surface: #ffffff;
-  --text: #1d1d1f;
-  --text-secondary: #6e6e73;
-  --text-muted: #86868b;
-  --primary: #0071e3;
-  --primary-hover: #0077ed;
-  --accent: #a855f7;
-  --accent2: #ec4899;
-  --border: #d2d2d7;
-  --border-light: #e5e5ea;
-  --radius: 12px;
-  --shadow: 0 2px 8px rgba(0,0,0,0.06);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
-
   /* RHC 品牌色调 */
   --rhc-purple: #8b5cf6;
   --rhc-pink: #ec4899;
   --rhc-blue: #6366f1;
   --rhc-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
 }
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ========== SIDEBAR ========== */
-.sidebar {
-  width: 260px;
-  background: var(--surface);
-  border-right: 1px solid var(--border-light);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-}
-
-.sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  background: var(--rhc-gradient);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-
-.logo-text { font-size: 15px; font-weight: 700; }
-.logo-sub { font-size: 11px; color: var(--text-muted); }
-
-.nav { padding: 12px 0; flex: 1; overflow-y: auto; }
-
-.nav-section-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 8px 20px 6px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 20px;
-  font-size: 13.5px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 0;
-  transition: all 0.15s;
-  text-decoration: none;
-}
-
-.nav-item:hover { background: var(--bg); color: var(--text); }
-
-.nav-item.active {
-  background: linear-gradient(90deg, rgba(139,92,246,0.1) 0%, rgba(99,102,241,0.05) 100%);
-  color: var(--rhc-purple);
-  font-weight: 600;
-  border-left: 3px solid var(--rhc-purple);
-}
-
-.nav-icon { font-size: 16px; width: 20px; text-align: center; }
 
 /* ========== MAIN CONTENT ========== */
 .main {
@@ -361,10 +264,21 @@ body {
 .asset-panel {
   width: 100%;
   max-width: 720px;
+  max-height: 460px;
   background: var(--surface);
   border: 1px solid var(--border-light);
   border-radius: 16px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+#assetContent {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .asset-panel-header {
@@ -408,8 +322,35 @@ body {
 .asset-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  padding: 16px 20px 20px;
+  gap: 10px;
+  padding: 0 20px 16px;
+}
+
+.asset-sku-group {
+  padding: 12px 20px 4px;
+}
+
+.asset-sku-group:first-child {
+  padding-top: 16px;
+}
+
+.asset-sku-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.asset-sku-count {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 8px;
 }
 
 .asset-card {
@@ -435,7 +376,7 @@ body {
 
 .asset-card img {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 4/3;
   object-fit: cover;
   display: block;
 }
@@ -628,49 +569,63 @@ body {
 </head>
 <body>
 
-<!-- SIDEBAR -->
-<nav class="sidebar">
+<!-- SIDEBAR (shared with index.html) -->
+<aside class="sidebar">
   <div class="sidebar-header">
     <div class="logo">
-      <div class="logo-icon">✦</div>
-      <div>
-        <div class="logo-text">品牌内容工厂</div>
-        <div class="logo-sub">AI-Powered Brand Studio</div>
-      </div>
+      <img src="assets/logo_black.png" alt="内容宇宙" style="height: 28px; width: auto; object-fit: contain;">
     </div>
   </div>
 
-  <div class="nav">
-    <div class="nav-section-label">工作台</div>
-    <a href="index.html" class="nav-item">
-      <span class="nav-icon">⊞</span> 首页概览
-    </a>
-    <a href="creation.html" class="nav-item active">
-      <span class="nav-icon">✦</span> 开始创作
-    </a>
+  <nav class="nav">
+    <div class="nav-section">
+      <div class="nav-label">工作台</div>
+      <div class="nav-item active" data-page="creation" onclick="navigateTo('creation')">
+        <span class="nav-icon">✨</span>
+        <span>开始创作</span>
+      </div>
+      <div class="nav-item" data-page="assets" onclick="navigateTo('assets')">
+        <span class="nav-icon">📁</span>
+        <span>资产库</span>
+      </div>
+      <div class="nav-item" data-page="contents" onclick="navigateTo('contents')">
+        <span class="nav-icon">📋</span>
+        <span>已生成内容</span>
+      </div>
+      <div class="nav-item" data-page="brands" onclick="navigateTo('brands')">
+        <span class="nav-icon">🏷️</span>
+        <span>品牌管理</span>
+      </div>
+    </div>
 
-    <div class="nav-section-label" style="margin-top:12px;">资产管理</div>
-    <a href="index.html#assets" class="nav-item">
-      <span class="nav-icon">◫</span> 素材库
-    </a>
-    <a href="index.html#brands" class="nav-item">
-      <span class="nav-icon">◈</span> 品牌管理
-    </a>
+    <div class="nav-separator"></div>
 
-    <div class="nav-section-label" style="margin-top:12px;">生产</div>
-    <a href="index.html#tasks" class="nav-item">
-      <span class="nav-icon">▷</span> 任务队列
-    </a>
-    <a href="index.html#history" class="nav-item">
-      <span class="nav-icon">◷</span> 历史记录
-    </a>
-  </div>
-</nav>
+    <div class="nav-section">
+      <div class="nav-label">内容运营</div>
+      <div class="nav-item" data-page="social-media" onclick="navigateTo('social-media')">
+        <span class="nav-icon">📱</span>
+        <span>社媒数据</span>
+      </div>
+      <div class="nav-item" data-page="ad-data" onclick="navigateTo('ad-data')">
+        <span class="nav-icon">📊</span>
+        <span>投放数据</span>
+      </div>
+      <div class="nav-item" data-page="private-channel" onclick="navigateTo('private-channel')">
+        <span class="nav-icon">🔗</span>
+        <span>私域渠道</span>
+      </div>
+      <div class="nav-item" data-page="user-mgmt" onclick="navigateTo('user-mgmt')">
+        <span class="nav-icon">👤</span>
+        <span>用户管理</span>
+      </div>
+    </div>
+  </nav>
+</aside>
 
 <!-- MAIN -->
 <div class="main">
-  <!-- Topbar -->
-  <div class="topbar">
+  <!-- Topbar (creation mode) -->
+  <div class="topbar" id="creationTopbar">
     <div class="topbar-title">开始创作</div>
     <div class="topbar-brand">
       <div class="brand-dot"></div>
@@ -678,8 +633,17 @@ body {
     </div>
   </div>
 
-  <!-- Creation Stage -->
-  <div class="creation-stage">
+  <!-- Breadcrumb bar (SPA pages) -->
+  <div class="breadcrumb-bar" id="spaBreadcrumb" style="display:none;">
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="navigateTo('assets')">📁 资产库</button>
+      <button class="quick-btn" onclick="navigateTo('brands')">🏷️ 品牌管理</button>
+    </div>
+  </div>
+
+  <!-- ===== Inline Creation UI ===== -->
+  <div class="creation-stage" id="creationUI">
 
     <!-- Hero -->
     <div class="hero">
@@ -703,6 +667,7 @@ body {
             <div class="action-chip" id="chipVideo" onclick="toggleMode('video')">🎬 视频脚本</div>
             <div class="action-chip" id="chipImage" onclick="toggleMode('image')">🖼️ 图文种草</div>
             <div class="action-chip" id="chipShort" onclick="toggleMode('short')">⚡ 短视频</div>
+            <div class="action-chip" id="chipStoryboard" onclick="toggleMode('storyboard')">📝 视频脚本</div>
           </div>
           <button class="generate-btn" id="generateBtn" onclick="generate()" disabled>
             <span>生成</span>
@@ -731,30 +696,127 @@ body {
         <div class="asset-panel-title">
           <span>📦</span>
           <span>已关联资产库</span>
-          <div class="asset-panel-badge">人源活力® · 4 SKU图</div>
+          <div class="asset-panel-badge">人源活力® · 5 SKU · 18张</div>
         </div>
-        <div class="asset-panel-toggle open" id="assetToggle">▾</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;color:var(--text-muted);cursor:pointer;" onclick="event.stopPropagation();selectAllAssets();" id="selectAllBtn">全选</span>
+          <div class="asset-panel-toggle open" id="assetToggle">▾</div>
+        </div>
       </div>
-      <div id="assetGrid" class="asset-grid">
-        <div class="asset-card" id="asset-01" onclick="toggleAsset('01')">
-          <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120549766529029/01-studio-front.png" alt="棚拍正面" loading="lazy" />
-          <div class="asset-card-label">01 · 棚拍正面</div>
-          <div class="asset-check">✓</div>
+      <div id="assetContent">
+        <!-- 光感焕肤精华（光子瓶）-->
+        <div class="asset-sku-group"><div class="asset-sku-label">💜 光感焕肤精华（光子瓶）<span class="asset-sku-count">7张</span></div></div>
+        <div class="asset-grid">
+          <div class="asset-card" id="asset-gz01" onclick="toggleAsset('gz01')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611208167203799055/光子瓶-瓶身1.jpg" alt="瓶身实拍" loading="lazy" />
+            <div class="asset-card-label">瓶身实拍</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-gz02" onclick="toggleAsset('gz02')">
+            <img src="https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310185155559439/product1.png" alt="正面图1" loading="lazy" />
+            <div class="asset-card-label">正面图1</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-gz03" onclick="toggleAsset('gz03')">
+            <img src="https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310207804801039/product2.png" alt="正面图2" loading="lazy" />
+            <div class="asset-card-label">正面图2</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-gz04" onclick="toggleAsset('gz04')">
+            <img src="https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310228860207119/product3.png" alt="正面图3" loading="lazy" />
+            <div class="asset-card-label">正面图3</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-gz05" onclick="toggleAsset('gz05')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037061129535503/80eae667-bdd2-419e-b027-970e049bbfcb.jpg" alt="乳化液体" loading="lazy" />
+            <div class="asset-card-label">乳化液体</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-gz06" onclick="toggleAsset('gz06')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037118759272453/92246334-9228-4f7a-a059-94306850a329.jpg" alt="外包装" loading="lazy" />
+            <div class="asset-card-label">外包装</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-gz07" onclick="toggleAsset('gz07')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037147901296645/87bc1e3e-94fa-41aa-a857-10eb5e97ae37.jpg" alt="盒子打开" loading="lazy" />
+            <div class="asset-card-label">盒子打开</div>
+            <div class="asset-check">✓</div>
+          </div>
         </div>
-        <div class="asset-card" id="asset-02" onclick="toggleAsset('02')">
-          <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120562164891663/02-closeup-front.png" alt="近距正面" loading="lazy" />
-          <div class="asset-card-label">02 · 近距正面</div>
-          <div class="asset-check">✓</div>
+
+        <!-- 焕活修护冻干面膜 -->
+        <div class="asset-sku-group"><div class="asset-sku-label">🧊 焕活修护冻干面膜 <span class="asset-sku-count">4张</span></div></div>
+        <div class="asset-grid">
+          <div class="asset-card" id="asset-dm01" onclick="toggleAsset('dm01')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155631985917957/白底图.png" alt="白底主图" loading="lazy" />
+            <div class="asset-card-label">白底主图</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-dm02" onclick="toggleAsset('dm02')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611474576492199941/542212f1b0584947be5c8eca9d0ebfa4.jpg" alt="上脸效果" loading="lazy" />
+            <div class="asset-card-label">上脸效果</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-dm03" onclick="toggleAsset('dm03')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611295500565479429/img_v3_02c1_5df1cdc5-f39c-4ca9-9161-cd393cbe514g.png" alt="场景展示1" loading="lazy" />
+            <div class="asset-card-label">场景展示1</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-dm04" onclick="toggleAsset('dm04')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611295500498370565/img_v3_02c1_adc3e52d-2001-41e5-85f0-5ad4a46a836g_MIDDLE.png" alt="场景展示2" loading="lazy" />
+            <div class="asset-card-label">场景展示2</div>
+            <div class="asset-check">✓</div>
+          </div>
         </div>
-        <div class="asset-card" id="asset-03" onclick="toggleAsset('03')">
-          <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120578925330437/03-side-angle.png" alt="侧面角度" loading="lazy" />
-          <div class="asset-card-label">03 · 侧面角度</div>
-          <div class="asset-check">✓</div>
+
+        <!-- 鎏金抗衰次抛精华 -->
+        <div class="asset-sku-group"><div class="asset-sku-label">✨ 鎏金抗衰次抛精华 <span class="asset-sku-count">3张</span></div></div>
+        <div class="asset-grid">
+          <div class="asset-card" id="asset-cp01" onclick="toggleAsset('cp01')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632103358479/img_v3_02vm_b50e3e12-6d87-4cd9-92c9-a8a51b0cb21g.png" alt="场景展示1" loading="lazy" />
+            <div class="asset-card-label">场景展示1</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-cp02" onclick="toggleAsset('cp02')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611329537828978703/img_v3_02vm_d452bd5f-efe8-498c-bdc3-dfa23d50aa6g.png" alt="场景展示2" loading="lazy" />
+            <div class="asset-card-label">场景展示2</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-cp03" onclick="toggleAsset('cp03')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611329537828978693/img_v3_02vn_89048105-3288-4f31-96c4-219e62aca18g.png" alt="场景展示3" loading="lazy" />
+            <div class="asset-card-label">场景展示3</div>
+            <div class="asset-check">✓</div>
+          </div>
         </div>
-        <div class="asset-card" id="asset-04" onclick="toggleAsset('04')">
-          <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120595870318607/04-handheld.png" alt="手持展示" loading="lazy" />
-          <div class="asset-card-label">04 · 手持展示</div>
-          <div class="asset-check">✓</div>
+
+        <!-- 玫瑰淡纹提拉眼油 -->
+        <div class="asset-sku-group"><div class="asset-sku-label">🌹 玫瑰淡纹提拉眼油 <span class="asset-sku-count">2张</span></div></div>
+        <div class="asset-grid">
+          <div class="asset-card" id="asset-yy01" onclick="toggleAsset('yy01')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611150507687280655/人源活力-玫瑰淡纹提拉眼油.png" alt="正装白底图" loading="lazy" />
+            <div class="asset-card-label">正装白底图</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-yy02" onclick="toggleAsset('yy02')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611461650855231503/眼油小样.png" alt="小样产品图" loading="lazy" />
+            <div class="asset-card-label">小样产品图</div>
+            <div class="asset-check">✓</div>
+          </div>
+        </div>
+
+        <!-- 寡肽修护冻干球 -->
+        <div class="asset-sku-group"><div class="asset-sku-label">🔮 寡肽修护冻干球 <span class="asset-sku-count">2张</span></div></div>
+        <div class="asset-grid">
+          <div class="asset-card" id="asset-dq01" onclick="toggleAsset('dq01')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632002695173/白底.jpg" alt="套装白底图" loading="lazy" />
+            <div class="asset-card-label">套装白底图</div>
+            <div class="asset-check">✓</div>
+          </div>
+          <div class="asset-card" id="asset-dq02" onclick="toggleAsset('dq02')">
+            <img src="https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611474678447341573/单瓶.png" alt="单瓶产品图" loading="lazy" />
+            <div class="asset-card-label">单瓶产品图</div>
+            <div class="asset-check">✓</div>
+          </div>
         </div>
       </div>
     </div>
@@ -783,6 +845,9 @@ body {
     <!-- spacer -->
     <div style="height:40px;"></div>
   </div>
+
+  <!-- ===== SPA Content Area (for other pages) ===== -->
+  <div class="content" id="content" style="display:none;"></div>
 </div>
 
 <script>
@@ -792,10 +857,29 @@ let selectedAssets = new Set();
 let isGenerating = false;
 
 const assetMeta = {
-  '01': { label: '棚拍正面', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120549766529029/01-studio-front.png' },
-  '02': { label: '近距正面', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120562164891663/02-closeup-front.png' },
-  '03': { label: '侧面角度', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120578925330437/03-side-angle.png' },
-  '04': { label: '手持展示', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-610120595870318607/04-handheld.png' },
+  // 光感焕肤精华（光子瓶）
+  'gz01': { sku: '光子瓶', label: '瓶身实拍', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611208167203799055/光子瓶-瓶身1.jpg' },
+  'gz02': { sku: '光子瓶', label: '正面图1', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310185155559439/product1.png' },
+  'gz03': { sku: '光子瓶', label: '正面图2', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310207804801039/product2.png' },
+  'gz04': { sku: '光子瓶', label: '正面图3', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310228860207119/product3.png' },
+  'gz05': { sku: '光子瓶', label: '乳化液体', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037061129535503/80eae667-bdd2-419e-b027-970e049bbfcb.jpg' },
+  'gz06': { sku: '光子瓶', label: '外包装', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037118759272453/92246334-9228-4f7a-a059-94306850a329.jpg' },
+  'gz07': { sku: '光子瓶', label: '盒子打开', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037147901296645/87bc1e3e-94fa-41aa-a857-10eb5e97ae37.jpg' },
+  // 焕活修护冻干面膜
+  'dm01': { sku: '冻干面膜', label: '白底主图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155631985917957/白底图.png' },
+  'dm02': { sku: '冻干面膜', label: '上脸效果', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611474576492199941/542212f1b0584947be5c8eca9d0ebfa4.jpg' },
+  'dm03': { sku: '冻干面膜', label: '场景展示1', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611295500565479429/img_v3_02c1_5df1cdc5-f39c-4ca9-9161-cd393cbe514g.png' },
+  'dm04': { sku: '冻干面膜', label: '场景展示2', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611295500498370565/img_v3_02c1_adc3e52d-2001-41e5-85f0-5ad4a46a836g_MIDDLE.png' },
+  // 鎏金抗衰次抛精华
+  'cp01': { sku: '次抛精华', label: '场景展示1', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632103358479/img_v3_02vm_b50e3e12-6d87-4cd9-92c9-a8a51b0cb21g.png' },
+  'cp02': { sku: '次抛精华', label: '场景展示2', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611329537828978703/img_v3_02vm_d452bd5f-efe8-498c-bdc3-dfa23d50aa6g.png' },
+  'cp03': { sku: '次抛精华', label: '场景展示3', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611329537828978693/img_v3_02vn_89048105-3288-4f31-96c4-219e62aca18g.png' },
+  // 玫瑰淡纹提拉眼油
+  'yy01': { sku: '眼油', label: '正装白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611150507687280655/人源活力-玫瑰淡纹提拉眼油.png' },
+  'yy02': { sku: '眼油', label: '小样产品图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611461650855231503/眼油小样.png' },
+  // 寡肽修护冻干球
+  'dq01': { sku: '冻干球', label: '套装白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632002695173/白底.jpg' },
+  'dq02': { sku: '冻干球', label: '单瓶产品图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611474678447341573/单瓶.png' },
 };
 
 // ========== PROMPT INPUT ==========
@@ -816,7 +900,7 @@ function toggleMode(mode) {
     selectedMode = null;
     document.getElementById('chip' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.remove('active');
   } else {
-    ['video','image','short'].forEach(m => {
+    ['video','image','short','storyboard'].forEach(m => {
       document.getElementById('chip' + m.charAt(0).toUpperCase() + m.slice(1)).classList.remove('active');
     });
     selectedMode = mode;
@@ -834,119 +918,628 @@ function toggleAsset(id) {
     selectedAssets.add(id);
     card.classList.add('selected');
   }
+  updateSelectAllBtn();
+}
+
+function selectAllAssets() {
+  const allIds = Object.keys(assetMeta);
+  const allSelected = allIds.every(id => selectedAssets.has(id));
+  if (allSelected) {
+    allIds.forEach(id => {
+      selectedAssets.delete(id);
+      const card = document.getElementById('asset-' + id);
+      if (card) card.classList.remove('selected');
+    });
+  } else {
+    allIds.forEach(id => {
+      selectedAssets.add(id);
+      const card = document.getElementById('asset-' + id);
+      if (card) card.classList.add('selected');
+    });
+  }
+  updateSelectAllBtn();
+}
+
+function updateSelectAllBtn() {
+  const btn = document.getElementById('selectAllBtn');
+  if (!btn) return;
+  const allIds = Object.keys(assetMeta);
+  btn.textContent = allIds.every(id => selectedAssets.has(id)) ? '取消全选' : '全选';
 }
 
 function toggleAssetPanel() {
-  const grid = document.getElementById('assetGrid');
+  const content = document.getElementById('assetContent');
   const toggle = document.getElementById('assetToggle');
-  if (grid.style.display === 'none') {
-    grid.style.display = 'grid';
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
     toggle.classList.add('open');
   } else {
-    grid.style.display = 'none';
+    content.style.display = 'none';
     toggle.classList.remove('open');
   }
 }
 
 // ========== GENERATE ==========
-function generate() {
+let currentVideoTaskId = null;
+let videoPollingTimer = null;
+let generatedCopyText = '';
+
+function setStatus(text, loading = false) {
+  document.getElementById('statusDot').className = 'status-dot' + (loading ? ' loading' : '');
+  document.getElementById('statusText').textContent = text;
+}
+
+function setProgress(pct) {
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+async function generate() {
   if (isGenerating) return;
   const prompt = document.getElementById('promptInput').value.trim();
   if (!prompt) return;
 
+  // Branch: storyboard mode goes to generateStoryboard
+  if (selectedMode === 'storyboard') {
+    return generateStoryboard(prompt);
+  }
+
   isGenerating = true;
   document.getElementById('generateBtn').disabled = true;
+  currentVideoTaskId = null;
+  generatedCopyText = '';
+  if (videoPollingTimer) { clearInterval(videoPollingTimer); videoPollingTimer = null; }
 
   // Show result area
   const resultArea = document.getElementById('resultArea');
   resultArea.classList.add('show');
   resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-  // Reset
-  document.getElementById('statusDot').className = 'status-dot loading';
-  document.getElementById('statusText').textContent = '正在生成...';
-  document.getElementById('progressBar').style.width = '0%';
-  document.getElementById('resultBody').innerHTML = `
-    <div class="skeleton" style="height:18px;width:60%;margin-bottom:10px;"></div>
-    <div class="skeleton" style="height:14px;width:90%;margin-bottom:8px;"></div>
-    <div class="skeleton" style="height:14px;width:75%;margin-bottom:8px;"></div>
-    <div class="skeleton" style="height:14px;width:82%;"></div>
-  `;
+  setStatus('✍️ AI 正在生成提示词...', true);
+  setProgress(5);
+  document.getElementById('resultBody').innerHTML = `<div class="result-prompt-out" id="streamOutput" style="white-space:pre-wrap;font-size:13px;line-height:1.7;"></div>`;
 
-  // Fake progress
-  let prog = 0;
-  const progTimer = setInterval(() => {
-    prog = Math.min(prog + Math.random() * 18, 85);
-    document.getElementById('progressBar').style.width = prog + '%';
-  }, 400);
-
-  // Build output based on mode + prompt
   const mode = selectedMode || 'video';
   const assets = Array.from(selectedAssets);
 
-  setTimeout(() => {
-    clearInterval(progTimer);
-    document.getElementById('progressBar').style.width = '100%';
-    document.getElementById('statusDot').className = 'status-dot';
-    document.getElementById('statusText').textContent = '生成完成 ✓';
+  // Determine SKU from selected assets
+  const skuSet = new Set();
+  assets.forEach(id => { if (assetMeta[id]) skuSet.add(assetMeta[id].sku); });
+  const skuName = skuSet.size === 1 ? [...skuSet][0] : [...skuSet].join('、') || '光子瓶';
 
-    const output = buildOutput(prompt, mode, assets);
-    document.getElementById('resultBody').innerHTML = output;
+  // Map mode to API mode param
+  const modeMap = { video: 'video_script', image: 'xiaohongshu', short: 'short_video' };
+  const apiMode = modeMap[mode] || 'video_script';
 
+  // Build asset context for the prompt
+  let assetContext = '';
+  if (assets.length > 0) {
+    const assetDescs = assets.map(id => {
+      const a = assetMeta[id];
+      return a ? `${a.sku}-${a.label}` : id;
+    });
+    assetContext = `\n\n可用素材：${assetDescs.join('、')}`;
+  }
+
+  // === Step 1: AI generates Seedance prompt / copy ===
+  try {
+    const formData = new FormData();
+    formData.append('prompt', prompt + assetContext);
+    formData.append('brand', '人源活力');
+    formData.append('sku', skuName);
+    formData.append('mode', apiMode);
+
+    const resp = await fetch('/api/generate/copy', { method: 'POST', body: formData });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    const outputEl = document.getElementById('streamOutput');
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) throw new Error(parsed.error);
+          if (parsed.text) {
+            generatedCopyText += parsed.text;
+            outputEl.textContent = generatedCopyText;
+            setProgress(Math.min(40, 5 + generatedCopyText.length / 20));
+          }
+        } catch(e) { /* skip malformed */ }
+      }
+    }
+
+    setProgress(50);
+    setStatus('✅ 提示词生成完成 — 请检查并修改', false);
+
+  } catch(err) {
+    setStatus('⚠️ 生成失败: ' + err.message, false);
+    document.getElementById('resultBody').innerHTML = `<div style="color:#ef4444;font-size:13px;">错误：${err.message}</div>`;
     isGenerating = false;
     document.getElementById('generateBtn').disabled = false;
-  }, 2400);
+    return;
+  }
+
+  // === Show editable result + confirm button ===
+  renderEditableResult(mode, assets);
+  isGenerating = false;
+  document.getElementById('generateBtn').disabled = false;
 }
 
-function buildOutput(prompt, mode, assets) {
-  const modeLabel = { video: '🎬 Seedance 视频提示词', image: '🖼️ 图文种草文案', short: '⚡ 短视频脚本' }[mode] || '🎬 Seedance 视频提示词';
+function renderEditableResult(mode, assets) {
+  const modeLabel = { video: '🎬 Seedance 视频提示词', image: '🖼️ 小红书图文种草', short: '⚡ 短视频脚本' }[mode] || '🎬 Seedance 视频提示词';
 
-  // Selected asset chips
   let assetChips = '';
-  const assetKeys = assets.length > 0 ? assets : ['01'];
-  assetKeys.forEach(id => {
+  assets.forEach(id => {
     const a = assetMeta[id];
-    if (a) {
-      assetChips += `<div class="result-sku-chip"><img src="${a.url}" alt="${a.label}"/>${a.label}</div>`;
-    }
+    if (a) assetChips += `<div class="result-sku-chip"><img src="${a.url}" alt="${a.label}"/>${a.sku}·${a.label}</div>`;
   });
 
-  // Build a structured prompt
-  const generatedPrompt = buildSeedancePrompt(prompt, mode, assetKeys);
+  const canGenVideo = (mode === 'video' || mode === 'short') && assets.length > 0;
 
-  return `
+  document.getElementById('resultBody').innerHTML = `
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">${modeLabel}</div>
-    <div class="result-prompt-out">${generatedPrompt}</div>
-    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">📦 关联素材</div>
-    <div class="result-image-row">${assetChips}</div>
-    <div class="result-actions">
-      <button class="result-btn primary" onclick="copyResult()">📋 复制提示词</button>
-      <button class="result-btn" onclick="refine()">✦ 优化</button>
-      <button class="result-btn" onclick="resetResult()">↺ 重新生成</button>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">👇 你可以直接编辑下方提示词，修改后再确认生成</div>
+    <textarea id="editablePrompt" style="width:100%;min-height:180px;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;line-height:1.7;font-family:inherit;resize:vertical;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--rhc-purple)'" onblur="this.style.borderColor='var(--border)'">${escapeHtml(generatedCopyText)}</textarea>
+    ${assetChips.length > 0 ? `<div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:12px 0 8px;">📦 关联素材（将作为参考图）</div><div class="result-image-row">${assetChips}</div>` : ''}
+    <div class="result-actions" style="margin-top:16px;">
+      ${canGenVideo ? `<button class="result-btn primary" onclick="confirmAndGenerate()" id="confirmGenBtn">🎬 确认并生成视频</button>` : ''}
+      <button class="result-btn primary" onclick="copyResult()">📋 复制文案</button>
+      <button class="result-btn" onclick="refine()">✦ 重新优化</button>
+      <button class="result-btn" onclick="resetResult()">↺ 重置</button>
+    </div>
+    <div id="videoSection" style="display:none;margin-top:16px;padding:14px;background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:10px;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--rhc-purple);margin-bottom:8px;">🎬 视频生成</div>
+      <div id="videoStatus" style="font-size:13px;color:var(--text-secondary);">准备提交...</div>
+      <div id="videoProgressWrap" class="progress-bar-wrap" style="margin-top:8px;"><div id="videoProgressBar" class="progress-bar" style="width:0%;background:var(--rhc-gradient);"></div></div>
+      <div id="videoPlayer" style="display:none;margin-top:12px;"></div>
     </div>
   `;
 }
 
-function buildSeedancePrompt(userPrompt, mode, assets) {
-  const assetDesc = assets.includes('04') ? 'hand-held product shot with visible label'
-    : assets.includes('01') ? 'studio product shot, warm bokeh background'
-    : assets.includes('03') ? 'side-angle shot showing bubble texture layer'
-    : 'close-up product shot on white surface';
+// === Step 2: User confirms and triggers Seedance ===
+async function confirmAndGenerate() {
+  const editedPrompt = document.getElementById('editablePrompt').value.trim();
+  if (!editedPrompt) return;
 
-  if (mode === 'image') {
-    return `📝 小红书图文种草文案\n\n【标题】：比精华更精华！这瓶光子瓶让我皮肤的毛孔都哭了👏\n\n【正文】：\n真的被这瓶「人源活力 光子瓶」拿捏了！\n紫粉渐变的瓶身，一看就很高级～\n最近换季皮肤超干，用了一周已经不一样了！\n蛋白酶成分真的会让皮肤变透！\n\n配上你的创意：「${userPrompt}」\n\n#护肤 #精华液 #人源活力 #光子瓶 #护肤推荐`;
+  generatedCopyText = editedPrompt;
+  const assets = Array.from(selectedAssets);
+  const confirmBtn = document.getElementById('confirmGenBtn');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '⏳ 提交中...'; }
+
+  // Show video section
+  document.getElementById('videoSection').style.display = 'block';
+  document.getElementById('videoSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  await startVideoGeneration(editedPrompt, assets);
+}
+
+async function startVideoGeneration(prompt, assets) {
+  const videoStatusEl = document.getElementById('videoStatus');
+  const videoProgEl = document.getElementById('videoProgressBar');
+  if (!videoStatusEl) return;
+
+  isGenerating = true;
+  videoStatusEl.textContent = '📤 提交视频任务到 Seedance 2.0...';
+  setStatus('🎬 正在生成视频...', true);
+  setProgress(55);
+
+  const imageUrls = assets.map(id => assetMeta[id]?.url).filter(Boolean);
+  const videoPrompt = prompt.length > 300 ? prompt.slice(0, 300) + '...' : prompt;
+
+  try {
+    const formData = new FormData();
+    formData.append('prompt', videoPrompt);
+    formData.append('image_urls', JSON.stringify(imageUrls));
+    formData.append('duration', '10');
+    formData.append('ratio', '9:16');
+    formData.append('model', '2.0');
+    formData.append('audio', 'true');
+
+    const resp = await fetch('/api/generate/reference', { method: 'POST', body: formData });
+    const json = await resp.json();
+    if (!json.success) throw new Error(json.detail || 'Submit failed');
+
+    currentVideoTaskId = json.task_id;
+    videoStatusEl.textContent = `⏳ 视频生成中... (任务 ${currentVideoTaskId.slice(0, 8)})`;
+    videoProgEl.style.width = '10%';
+    setProgress(60);
+
+    // Start polling
+    let pollCount = 0;
+    videoPollingTimer = setInterval(async () => {
+      pollCount++;
+      try {
+        const pollResp = await fetch(`/api/task/${currentVideoTaskId}`);
+        const pollData = await pollResp.json();
+        const status = pollData.status || pollData.data?.status;
+
+        if (status === 'succeeded') {
+          clearInterval(videoPollingTimer); videoPollingTimer = null;
+          const videoUrl = pollData.data?.video_url || pollData.data?.data?.video_url;
+          videoProgEl.style.width = '100%';
+          setProgress(100);
+          setStatus('🎉 视频生成完成！', false);
+          videoStatusEl.textContent = '✅ 视频已就绪';
+          if (videoUrl) {
+            document.getElementById('videoPlayer').style.display = 'block';
+            document.getElementById('videoPlayer').innerHTML = `
+              <video controls style="width:100%;max-width:280px;border-radius:8px;display:block;" autoplay muted loop>
+                <source src="${videoUrl}" type="video/mp4">
+              </video>
+              <div style="margin-top:8px;display:flex;gap:8px;">
+                <a href="${videoUrl}" target="_blank" class="result-btn" style="text-decoration:none;font-size:12px;">📥 下载视频</a>
+                <button class="result-btn" onclick="navigator.clipboard.writeText('${videoUrl}')">🔗 复制链接</button>
+              </div>
+            `;
+          }
+          isGenerating = false;
+          document.getElementById('generateBtn').disabled = false;
+
+        } else if (status === 'failed' || status === 'error') {
+          clearInterval(videoPollingTimer); videoPollingTimer = null;
+          videoStatusEl.textContent = '❌ 视频生成失败，请重试';
+          setStatus('文案已生成，视频失败', false);
+          isGenerating = false;
+          document.getElementById('generateBtn').disabled = false;
+
+        } else {
+          // still processing
+          const fakeProg = Math.min(10 + pollCount * 4, 90);
+          videoProgEl.style.width = fakeProg + '%';
+          setProgress(60 + fakeProg * 0.4);
+        }
+      } catch(e) {
+        // network error, keep polling
+      }
+    }, 5000);
+
+  } catch(err) {
+    if (videoStatusEl) videoStatusEl.textContent = '⚠️ 视频提交失败: ' + err.message;
+    setStatus('文案已生成（视频提交失败）', false);
+    isGenerating = false;
+    document.getElementById('generateBtn').disabled = false;
+  }
+}
+
+// ========== STORYBOARD MODE ==========
+async function generateStoryboard(script) {
+  isGenerating = true;
+  document.getElementById('generateBtn').disabled = true;
+  generatedCopyText = '';
+
+  const resultArea = document.getElementById('resultArea');
+  resultArea.classList.add('show');
+  resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  setStatus('🎬 AI 正在生成分镜方案...', true);
+  setProgress(5);
+  document.getElementById('resultBody').innerHTML = `<div class="result-prompt-out" id="streamOutput" style="white-space:pre-wrap;font-size:13px;line-height:1.7;"></div>`;
+
+  const assets = Array.from(selectedAssets);
+  const imageUrls = assets.map(id => assetMeta[id]?.url).filter(Boolean);
+  const skuSet = new Set();
+  assets.forEach(id => { if (assetMeta[id]) skuSet.add(assetMeta[id].sku); });
+  const skuName = skuSet.size === 1 ? [...skuSet][0] : [...skuSet].join('、') || '光子瓶';
+
+  try {
+    const formData = new FormData();
+    formData.append('script', script);
+    formData.append('brand', '人源活力');
+    formData.append('sku', skuName);
+    formData.append('asset_urls', JSON.stringify(imageUrls));
+    formData.append('aspect_ratio', '9:16');
+
+    const resp = await fetch('/api/generate/storyboard', { method: 'POST', body: formData });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    const outputEl = document.getElementById('streamOutput');
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) throw new Error(parsed.error);
+          if (parsed.text) {
+            generatedCopyText += parsed.text;
+            outputEl.textContent = generatedCopyText;
+            setProgress(Math.min(45, 5 + generatedCopyText.length / 30));
+          }
+        } catch(e) { /* skip */ }
+      }
+    }
+
+    setProgress(50);
+    setStatus('✅ 分镜方案生成完成 — 请检查编辑后确认', false);
+
+  } catch(err) {
+    setStatus('⚠️ 生成失败: ' + err.message, false);
+    document.getElementById('resultBody').innerHTML = `<div style="color:#ef4444;font-size:13px;">错误：${err.message}</div>`;
+    isGenerating = false;
+    document.getElementById('generateBtn').disabled = false;
+    return;
   }
 
-  if (mode === 'short') {
-    return `🎬 短视频脚本 (15s)\n\n第0-3秒：产品特写开场\n镜头：${assetDesc}\n描述：光子瓶棚拍，紫粉渐变色泽，暖光打亮\n\n第4-10秒：使用场景\n${userPrompt}\n镜头：手持滴管，精华液落于掌心，慢镜头\n\n第11-15秒：效果呈现 + CTA\n画面：对比切换，Logo定格\n文案：人源活力®  肌肤焕新蛋白酶精华`;
+  // Show editable storyboard + confirm button
+  renderStoryboardResult(script, skuName, imageUrls);
+  isGenerating = false;
+  document.getElementById('generateBtn').disabled = false;
+}
+
+function renderStoryboardResult(originalScript, skuName, imageUrls) {
+  // Store params globally so the confirm button can access them without inline string escaping
+  window._storyboardParams = { originalScript, skuName, imageUrls };
+
+  const assets = Array.from(selectedAssets);
+  let assetChips = '';
+  assets.forEach(id => {
+    const a = assetMeta[id];
+    if (a) assetChips += `<div class="result-sku-chip"><img src="${a.url}" alt="${a.label}"/>${a.sku}·${a.label}</div>`;
+  });
+
+  document.getElementById('resultBody').innerHTML = `
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">📝 Seedance 分镜方案</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">👇 你可以编辑分镜方案，修改后点击「确认并创建任务」</div>
+    <textarea id="editablePrompt" style="width:100%;min-height:280px;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;line-height:1.7;font-family:inherit;resize:vertical;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--rhc-purple)'" onblur="this.style.borderColor='var(--border)'">${escapeHtml(generatedCopyText)}</textarea>
+    ${assetChips.length > 0 ? `<div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:12px 0 8px;">📦 关联素材</div><div class="result-image-row">${assetChips}</div>` : ''}
+    <div class="result-actions" style="margin-top:16px;">
+      <button class="result-btn primary" onclick="confirmStoryboard()" id="confirmStoryboardBtn">📋 确认并创建任务</button>
+      <button class="result-btn primary" onclick="copyResult()">📋 复制文案</button>
+      <button class="result-btn" onclick="refine()">✦ 重新优化</button>
+      <button class="result-btn" onclick="resetResult()">↺ 重置</button>
+    </div>
+  `;
+}
+
+async function confirmStoryboard() {
+  const params = window._storyboardParams || {};
+  const originalScript = params.originalScript || '';
+  const skuName = params.skuName || '';
+  const imageUrls = params.imageUrls || [];
+
+  const storyboard = document.getElementById('editablePrompt').value.trim();
+  if (!storyboard) { alert('分镜内容为空'); return; }
+
+  const btn = document.getElementById('confirmStoryboardBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 创建中...'; }
+
+  const segments = parseStoryboardSegments(storyboard, imageUrls);
+
+  try {
+    // Step 1: Create content task
+    const formData = new FormData();
+    formData.append('title', '分镜任务 · ' + skuName + ' · ' + new Date().toLocaleDateString('zh-CN'));
+    formData.append('brand', '人源活力');
+    formData.append('sku', skuName);
+    formData.append('script', originalScript);
+    formData.append('storyboard', storyboard);
+    formData.append('segments', JSON.stringify(segments));
+
+    const resp = await fetch('/api/content-tasks', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (!data.success) {
+      alert('创建失败: ' + (data.detail || ''));
+      if (btn) { btn.disabled = false; btn.textContent = '📋 确认并创建任务'; }
+      return;
+    }
+
+    const taskId = data.task?.task_id || data.task_id;
+
+    // Step 2: Show segment progress UI (replace the result body)
+    setStatus('🎬 正在提交视频生成...', true);
+    setProgress(50);
+
+    let segHtml = '';
+    segments.forEach((seg, i) => {
+      segHtml += `
+        <div id="seg-status-${seg.segment_id}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light);">
+          <div style="font-size:12px;font-weight:600;color:var(--text);min-width:60px;">片段${seg.segment_id}</div>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">${escapeHtml(seg.title)}</div>
+            <div class="progress-bar-wrap" style="height:3px;"><div id="seg-prog-${seg.segment_id}" class="progress-bar" style="width:0%;background:var(--rhc-gradient);"></div></div>
+          </div>
+          <div id="seg-label-${seg.segment_id}" style="font-size:11px;color:var(--text-muted);min-width:80px;text-align:right;">⏳ 等待提交</div>
+        </div>`;
+    });
+
+    document.getElementById('resultBody').innerHTML = `
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">🎬 视频生成进度</div>
+      <div id="segmentProgressList">${segHtml}</div>
+      <div id="storyboardVideoResults" style="margin-top:16px;"></div>
+    `;
+
+    // Step 3: Submit all segments
+    const submitResp = await fetch(`/api/content-tasks/${taskId}/submit`, { method: 'POST' });
+    const submitData = await submitResp.json();
+    if (!submitData.success) {
+      setStatus('⚠️ 提交失败: ' + (submitData.detail || ''), false);
+      return;
+    }
+
+    setProgress(60);
+
+    // Step 4: Poll each segment until all done
+    const segIds = segments.map(s => s.segment_id);
+    const segDone = {};
+    segIds.forEach(id => { segDone[id] = false; });
+
+    const pollTimer = setInterval(async () => {
+      try {
+        const taskResp = await fetch(`/api/content-tasks`);
+        const taskList = await taskResp.json();
+        const currentTask = (taskList.tasks || []).find(t => t.task_id === taskId);
+        if (!currentTask) return;
+
+        let allDone = true;
+        let completedCount = 0;
+
+        currentTask.segments.forEach(seg => {
+          const labelEl = document.getElementById(`seg-label-${seg.segment_id}`);
+          const progEl = document.getElementById(`seg-prog-${seg.segment_id}`);
+          if (!labelEl) return;
+
+          if (seg.status === 'completed' && seg.video_url) {
+            if (!segDone[seg.segment_id]) {
+              segDone[seg.segment_id] = true;
+              labelEl.textContent = '✅ 完成';
+              labelEl.style.color = '#34c759';
+              if (progEl) progEl.style.width = '100%';
+              // Add video player
+              const container = document.getElementById('storyboardVideoResults');
+              container.innerHTML += `
+                <div style="margin-bottom:12px;padding:12px;background:rgba(52,199,89,0.05);border:1px solid rgba(52,199,89,0.2);border-radius:10px;">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:8px;">片段${seg.segment_id}: ${escapeHtml(seg.title)}</div>
+                  <video controls style="width:100%;max-width:280px;border-radius:8px;" muted>
+                    <source src="${seg.video_url}" type="video/mp4">
+                  </video>
+                  <div style="margin-top:6px;display:flex;gap:8px;">
+                    <a href="${seg.video_url}" target="_blank" class="result-btn" style="text-decoration:none;font-size:11px;">📥 下载</a>
+                  </div>
+                </div>`;
+            }
+            completedCount++;
+          } else if (seg.status === 'failed') {
+            segDone[seg.segment_id] = true;
+            labelEl.textContent = '❌ 失败';
+            labelEl.style.color = '#ef4444';
+            completedCount++;
+          } else if (seg.status === 'generating' || seg.seedance_task_id) {
+            labelEl.textContent = '⏳ 生成中...';
+            labelEl.style.color = 'var(--rhc-purple)';
+            if (progEl) progEl.style.width = '50%';
+            allDone = false;
+          } else if (seg.status === 'submitted') {
+            labelEl.textContent = '📤 已提交';
+            if (progEl) progEl.style.width = '20%';
+            allDone = false;
+          } else {
+            allDone = false;
+          }
+        });
+
+        const progress = 60 + (completedCount / segments.length) * 40;
+        setProgress(progress);
+
+        // Also poll Seedance status for generating segments
+        for (const seg of currentTask.segments) {
+          if (seg.seedance_task_id && seg.status !== 'completed' && seg.status !== 'failed') {
+            try {
+              const pollResp = await fetch(`/api/task/${seg.seedance_task_id}`);
+              const pollData = await pollResp.json();
+              const status = pollData.status || pollData.data?.status;
+              if (status === 'succeeded') {
+                const videoUrl = pollData.data?.video_url || pollData.data?.data?.video_url;
+                if (videoUrl) {
+                  await fetch(`/api/content-tasks/${taskId}/segments/${seg.segment_id}/status`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: 'completed', video_url: videoUrl })
+                  });
+                }
+              } else if (status === 'failed' || status === 'error') {
+                await fetch(`/api/content-tasks/${taskId}/segments/${seg.segment_id}/status`, {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({ status: 'failed' })
+                });
+              }
+            } catch(e) { /* polling error, continue */ }
+          }
+        }
+
+        if (allDone || Object.values(segDone).every(Boolean)) {
+          clearInterval(pollTimer);
+          setProgress(100);
+          setStatus('🎉 全部视频生成完成！', false);
+          isGenerating = false;
+          document.getElementById('generateBtn').disabled = false;
+        }
+      } catch(e) { /* network error, keep polling */ }
+    }, 5000);
+
+  } catch(e) {
+    alert('创建失败: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '📋 确认并创建任务'; }
+  }
+}
+
+function parseStoryboardSegments(storyboard, defaultImageUrls) {
+  const segments = [];
+  const parts = storyboard.split(/===片段(\d+)[：:]\s*/);
+
+  for (let i = 1; i < parts.length; i += 2) {
+    const segNum = parseInt(parts[i]);
+    const content = parts[i + 1] || '';
+
+    const title = content.match(/^([^\n]+)/)?.[1]?.replace(/===.*$/, '').trim() || ('片段' + segNum);
+    // Always use reference2video
+    const apiType = 'reference2video';
+    // Prefer 15s — only use shorter if explicitly specified and necessary
+    const explicitDuration = parseInt(content.match(/时长[：:]\s*(\d+)/)?.[1] || '15');
+    const duration = Math.min(Math.max(explicitDuration, 4), 15);
+    const prompt = content.match(/提示词[：:]\s*([^\n]+(?:\n(?!负面|衔接|===)[^\n]+)*)/)?.[1]?.trim() || '';
+    const negPrompt = content.match(/负面提示词[：:]\s*([^\n]+)/)?.[1]?.trim() || '';
+
+    segments.push({
+      segment_id: String(segNum),
+      title: title,
+      api_type: apiType,
+      duration: Math.min(Math.max(duration, 4), 15),
+      prompt: prompt,
+      negative_prompt: negPrompt,
+      image_urls: defaultImageUrls,
+      seedance_task_id: null,
+      video_url: null,
+      status: 'pending'
+    });
   }
 
-  // default: video / seedance prompt
-  return `Seedance 2.0 提示词\n\nA ${assetDesc} of RHC Skin Renewal Protease Essence (光子瓶), featuring a translucent frosted glass dropper bottle with purple-to-pink gradient. ${userPrompt} Cinematic product photography, soft key light with warm bokeh, ultra-high definition, 9:16 vertical format, luxury skincare aesthetic, no text overlays. Camera: slow push-in, shallow depth of field.\n\n参考图：光子瓶素材 ${assets.map(id => '#' + id).join(', ') || '#01'}\n平台：抖音 / 小红书\n时长：15s`;
+  // Fallback: if no segments parsed, create one default
+  if (segments.length === 0) {
+    segments.push({
+      segment_id: '1',
+      title: '完整视频',
+      api_type: 'reference2video',
+      duration: 15,
+      prompt: storyboard.slice(0, 300),
+      negative_prompt: '',
+      image_urls: defaultImageUrls,
+      seedance_task_id: null,
+      video_url: null,
+      status: 'pending'
+    });
+  }
+
+  return segments;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function copyResult() {
-  const text = document.querySelector('.result-prompt-out')?.textContent || '';
+  const editBox = document.getElementById('editablePrompt');
+  const text = editBox ? editBox.value : (generatedCopyText || document.getElementById('copyOutput')?.textContent || '');
   navigator.clipboard.writeText(text).then(() => {
     const btn = event.target;
     const orig = btn.textContent;
@@ -962,10 +1555,15 @@ function refine() {
 }
 
 function resetResult() {
+  if (videoPollingTimer) { clearInterval(videoPollingTimer); videoPollingTimer = null; }
   document.getElementById('resultArea').classList.remove('show');
   document.getElementById('promptInput').value = '';
   document.getElementById('generateBtn').disabled = true;
+  generatedCopyText = '';
+  currentVideoTaskId = null;
+  isGenerating = false;
 }
 </script>
+<script src="/js/router.js"></script>
 </body>
 </html>

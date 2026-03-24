@@ -1,0 +1,519 @@
+<!-- pages/contents.html — 品牌内容管理 -->
+<style>
+.ct-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.ct-filter-btn {
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ct-filter-btn:hover { border-color: #8b5cf6; color: #8b5cf6; }
+.ct-filter-btn.active {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background: rgba(139,92,246,0.08);
+  font-weight: 600;
+}
+.ct-task-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.ct-task-card:hover { box-shadow: var(--shadow); }
+.ct-task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.ct-task-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ct-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ct-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.ct-badge-draft { background: #f3f4f6; color: #6b7280; }
+.ct-badge-ready { background: #dbeafe; color: #2563eb; }
+.ct-badge-generating { background: #fef3c7; color: #b45309; }
+.ct-badge-completed { background: #dcfce7; color: #15803d; }
+.ct-badge-partial { background: #fef2f2; color: #dc2626; }
+.ct-task-body {
+  display: none;
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--border-light);
+}
+.ct-task-body.open { display: block; }
+.ct-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 16px 0 8px;
+}
+.ct-collapsible {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: max-height 0.3s;
+}
+.ct-collapsible.expanded { max-height: none; }
+.ct-collapsible::after {
+  content: '... 点击展开';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(transparent, var(--bg));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: 11px;
+  color: #8b5cf6;
+  font-weight: 600;
+  padding-bottom: 4px;
+}
+.ct-collapsible.expanded::after { display: none; }
+.ct-segment {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.ct-seg-num {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.ct-seg-info { flex: 1; min-width: 0; }
+.ct-seg-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.ct-seg-detail { font-size: 11px; color: var(--text-secondary); }
+.ct-seg-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.ct-seg-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.ct-seg-btn:hover { border-color: #8b5cf6; color: #8b5cf6; }
+.ct-seg-btn.primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+}
+.ct-seg-btn.primary:hover { opacity: 0.9; }
+.ct-seg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ct-seg-video {
+  margin-top: 8px;
+  border-radius: 8px;
+  max-width: 240px;
+}
+.ct-submit-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  box-shadow: 0 4px 14px rgba(139,92,246,0.3);
+  transition: all 0.2s;
+}
+.ct-submit-all:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139,92,246,0.4); }
+.ct-submit-all:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.ct-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.ct-empty-icon { font-size: 48px; margin-bottom: 16px; }
+.ct-progress {
+  height: 3px;
+  background: var(--border-light);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.ct-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+</style>
+
+<div class="page">
+  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h1 class="page-title">品牌内容管理</h1>
+      <p class="page-subtitle">管理 AI 分镜任务与 Seedance 视频产出物</p>
+    </div>
+    <a href="#creation" class="ct-submit-all" style="text-decoration:none;">+ 新建内容任务</a>
+  </div>
+
+  <div class="ct-filter-bar">
+    <button class="ct-filter-btn active" onclick="ctFilter(null)">全部</button>
+    <button class="ct-filter-btn" onclick="ctFilter('draft')">草稿</button>
+    <button class="ct-filter-btn" onclick="ctFilter('storyboard_ready')">分镜就绪</button>
+    <button class="ct-filter-btn" onclick="ctFilter('generating')">生成中</button>
+    <button class="ct-filter-btn" onclick="ctFilter('completed')">已完成</button>
+    <button class="ct-filter-btn" onclick="ctFilter('partial')">部分完成</button>
+    <div style="flex:1;"></div>
+    <select id="ctBrandFilter" class="form-select" style="width:auto;" onchange="ctFilter(currentStatusFilter)">
+      <option value="">全部品牌</option>
+      <option value="人源活力">人源活力</option>
+    </select>
+  </div>
+
+  <div id="ctTaskList"></div>
+</div>
+
+<script>
+var ctTasks = [];
+var currentStatusFilter = null;
+var ctPollingTimers = {};
+
+async function ctLoadTasks() {
+  try {
+    const resp = await fetch('/api/content-tasks');
+    const data = await resp.json();
+    if (data.success) ctTasks = data.tasks;
+  } catch (e) {
+    console.error('Failed to load tasks:', e);
+  }
+  ctRender();
+}
+
+function ctFilter(status) {
+  currentStatusFilter = status;
+  document.querySelectorAll('.ct-filter-btn').forEach(b => b.classList.remove('active'));
+  if (!status) {
+    document.querySelector('.ct-filter-btn').classList.add('active');
+  } else {
+    document.querySelectorAll('.ct-filter-btn').forEach(b => {
+      if (b.textContent.trim() === ({
+        draft: '草稿', storyboard_ready: '分镜就绪', generating: '生成中',
+        completed: '已完成', partial: '部分完成'
+      })[status]) b.classList.add('active');
+    });
+  }
+  ctRender();
+}
+
+function ctRender() {
+  const container = document.getElementById('ctTaskList');
+  const brandFilter = document.getElementById('ctBrandFilter').value;
+  let filtered = ctTasks;
+  if (currentStatusFilter) filtered = filtered.filter(t => t.status === currentStatusFilter);
+  if (brandFilter) filtered = filtered.filter(t => t.brand === brandFilter);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="ct-empty">
+      <div class="ct-empty-icon">📋</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px;">暂无内容任务</div>
+      <div style="font-size:13px;">前往「开始创作」使用视频脚本模式创建分镜任务</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(t => ctRenderCard(t)).join('');
+  // Start polling for submitted segments
+  filtered.forEach(t => {
+    t.segments.forEach(seg => {
+      if (seg.status === 'submitted' && seg.seedance_task_id) {
+        ctStartPolling(t.task_id, seg);
+      }
+    });
+  });
+}
+
+function ctStatusBadge(status) {
+  const map = {
+    draft: ['草稿', 'draft'],
+    storyboard_ready: ['分镜就绪', 'ready'],
+    generating: ['生成中', 'generating'],
+    completed: ['已完成', 'completed'],
+    partial: ['部分完成', 'partial'],
+  };
+  const [label, cls] = map[status] || [status, 'draft'];
+  return `<span class="ct-badge ct-badge-${cls}">${label}</span>`;
+}
+
+function ctSegStatusIcon(status) {
+  const map = {
+    pending: '⏸️',
+    submitted: '⏳',
+    generating: '⏳',
+    completed: '✅',
+    succeeded: '✅',
+    failed: '❌',
+  };
+  return map[status] || '⏸️';
+}
+
+function ctRenderCard(task) {
+  const segs = task.segments || [];
+  const completed = segs.filter(s => s.status === 'completed' || s.status === 'succeeded').length;
+  const total = segs.length;
+  const progressPct = total > 0 ? Math.round(completed / total * 100) : 0;
+
+  return `<div class="ct-task-card" id="ct-card-${task.task_id}">
+    <div class="ct-task-header" onclick="ctToggleCard('${task.task_id}')">
+      <div class="ct-task-title">
+        <span>🎬</span>
+        <span>${escHtml(task.title)}</span>
+        ${ctStatusBadge(task.status)}
+      </div>
+      <div class="ct-task-meta">
+        <span>${escHtml(task.brand || '')} ${escHtml(task.sku || '')}</span>
+        <span>${total}段</span>
+        ${total > 0 ? `<span>${completed}/${total}完成</span>` : ''}
+        <span style="font-size:11px;color:var(--text-muted);">▾</span>
+      </div>
+    </div>
+    <div class="ct-task-body" id="ct-body-${task.task_id}">
+      ${task.script ? `<div class="ct-section-label">原始脚本</div>
+        <div class="ct-collapsible" onclick="this.classList.toggle('expanded')">${escHtml(task.script)}</div>` : ''}
+      ${task.storyboard ? `<div class="ct-section-label">AI 分镜方案</div>
+        <div class="ct-collapsible" onclick="this.classList.toggle('expanded')">${escHtml(task.storyboard)}</div>` : ''}
+      ${segs.length > 0 ? `<div class="ct-section-label">视频片段 (${completed}/${total})</div>
+        <div class="ct-progress"><div class="ct-progress-bar" style="width:${progressPct}%"></div></div>
+        <div style="margin-top:12px;">
+          ${segs.map((seg, i) => ctRenderSegment(task.task_id, seg, i)).join('')}
+        </div>
+        <button class="ct-submit-all" onclick="ctSubmitAll('${task.task_id}')" id="ct-submit-all-${task.task_id}"
+          ${segs.every(s => s.status !== 'pending' && s.status !== 'failed') ? 'disabled' : ''}>
+          🚀 提交全部待生成片段
+        </button>` : '<div style="font-size:13px;color:var(--text-muted);padding:12px 0;">暂无片段</div>'}
+    </div>
+  </div>`;
+}
+
+function ctRenderSegment(taskId, seg, idx) {
+  const statusIcon = ctSegStatusIcon(seg.status);
+  const isCompleted = seg.status === 'completed' || seg.status === 'succeeded';
+  const isPending = seg.status === 'pending' || seg.status === 'failed';
+  const isSubmitted = seg.status === 'submitted' || seg.status === 'generating';
+
+  let actions = '';
+  if (isPending) {
+    actions = `<button class="ct-seg-btn primary" onclick="event.stopPropagation();ctSubmitSegment('${taskId}','${seg.segment_id}',this)">提交生成</button>`;
+  } else if (isSubmitted) {
+    actions = `<span style="font-size:11px;color:#b45309;font-weight:600;">⏳ 生成中...</span>`;
+  } else if (isCompleted) {
+    actions = `<button class="ct-seg-btn" onclick="event.stopPropagation();ctResubmit('${taskId}','${seg.segment_id}',this)">重新生成</button>`;
+  }
+
+  let videoHtml = '';
+  if (isCompleted && seg.video_url) {
+    videoHtml = `<div style="margin-top:8px;">
+      <video controls class="ct-seg-video" muted>
+        <source src="${seg.video_url}" type="video/mp4">
+      </video>
+      <div style="margin-top:4px;display:flex;gap:6px;">
+        <a href="${seg.video_url}" target="_blank" class="ct-seg-btn" style="text-decoration:none;font-size:10px;">📥 下载</a>
+        <button class="ct-seg-btn" style="font-size:10px;" onclick="event.stopPropagation();navigator.clipboard.writeText('${seg.video_url}')">🔗 复制链接</button>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="ct-segment" id="ct-seg-${taskId}-${seg.segment_id}">
+    <div class="ct-seg-num">${idx + 1}</div>
+    <div class="ct-seg-info">
+      <div class="ct-seg-title">${statusIcon} ${escHtml(seg.title || '片段' + (idx + 1))}</div>
+      <div class="ct-seg-detail">${seg.api_type || 'reference2video'} · ${seg.duration || 10}s · ${escHtml((seg.prompt || '').slice(0, 60))}${(seg.prompt||'').length > 60 ? '...' : ''}</div>
+      ${videoHtml}
+    </div>
+    <div class="ct-seg-actions">${actions}</div>
+  </div>`;
+}
+
+function ctToggleCard(taskId) {
+  const body = document.getElementById('ct-body-' + taskId);
+  if (body) body.classList.toggle('open');
+}
+
+async function ctSubmitSegment(taskId, segId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 提交中...'; }
+  try {
+    const resp = await fetch(`/api/content-tasks/${taskId}/segments/${segId}/submit`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      // Update local state and re-render
+      const task = ctTasks.find(t => t.task_id === taskId);
+      if (task) {
+        const seg = task.segments.find(s => String(s.segment_id) === segId);
+        if (seg) {
+          seg.seedance_task_id = data.seedance_task_id;
+          seg.status = 'submitted';
+          ctStartPolling(taskId, seg);
+        }
+        task.status = 'generating';
+      }
+      ctRender();
+    } else {
+      alert('提交失败: ' + (data.detail || 'Unknown error'));
+      if (btn) { btn.disabled = false; btn.textContent = '提交生成'; }
+    }
+  } catch (e) {
+    alert('提交失败: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '提交生成'; }
+  }
+}
+
+async function ctSubmitAll(taskId) {
+  const btn = document.getElementById('ct-submit-all-' + taskId);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 批量提交中...'; }
+  try {
+    const resp = await fetch(`/api/content-tasks/${taskId}/submit`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      await ctLoadTasks();
+    } else {
+      alert('提交失败');
+    }
+  } catch (e) {
+    alert('提交失败: ' + e.message);
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '🚀 提交全部待生成片段'; }
+}
+
+async function ctResubmit(taskId, segId, btn) {
+  // Reset segment to pending, then submit
+  const task = ctTasks.find(t => t.task_id === taskId);
+  if (task) {
+    const seg = task.segments.find(s => String(s.segment_id) === segId);
+    if (seg) { seg.status = 'pending'; seg.video_url = null; seg.seedance_task_id = null; }
+  }
+  ctRender();
+  // Open the card body
+  const body = document.getElementById('ct-body-' + taskId);
+  if (body) body.classList.add('open');
+  await ctSubmitSegment(taskId, segId, null);
+}
+
+function ctStartPolling(taskId, seg) {
+  const key = taskId + '-' + seg.segment_id;
+  if (ctPollingTimers[key]) return;
+
+  let count = 0;
+  ctPollingTimers[key] = setInterval(async () => {
+    count++;
+    if (count > 120) { clearInterval(ctPollingTimers[key]); delete ctPollingTimers[key]; return; }
+    try {
+      const resp = await fetch(`/api/task/${seg.seedance_task_id}`);
+      const data = await resp.json();
+      const status = data.status || data.data?.status;
+
+      if (status === 'succeeded') {
+        clearInterval(ctPollingTimers[key]);
+        delete ctPollingTimers[key];
+        const videoUrl = data.data?.video_url || data.data?.data?.video_url || '';
+
+        // Update local state
+        const task = ctTasks.find(t => t.task_id === taskId);
+        if (task) {
+          const s = task.segments.find(s => String(s.segment_id) === String(seg.segment_id));
+          if (s) { s.status = 'completed'; s.video_url = videoUrl; }
+          // Recompute task status
+          const statuses = new Set(task.segments.map(s => s.status));
+          if ([...statuses].every(st => st === 'completed' || st === 'succeeded')) task.status = 'completed';
+        }
+        // Persist to backend
+        const fd = new FormData();
+        fd.append('status', 'completed');
+        fd.append('video_url', videoUrl);
+        fetch(`/api/content-tasks/${taskId}/segments/${seg.segment_id}/status`, { method: 'POST', body: fd });
+        ctRender();
+
+      } else if (status === 'failed' || status === 'error') {
+        clearInterval(ctPollingTimers[key]);
+        delete ctPollingTimers[key];
+        const task = ctTasks.find(t => t.task_id === taskId);
+        if (task) {
+          const s = task.segments.find(s => String(s.segment_id) === String(seg.segment_id));
+          if (s) s.status = 'failed';
+        }
+        const fd = new FormData();
+        fd.append('status', 'failed');
+        fetch(`/api/content-tasks/${taskId}/segments/${seg.segment_id}/status`, { method: 'POST', body: fd });
+        ctRender();
+      }
+    } catch (e) { /* network error, keep polling */ }
+  }, 5000);
+}
+
+function escHtml(t) {
+  if (!t) return '';
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Initial load
+ctLoadTasks();
+</script>

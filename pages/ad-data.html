@@ -1,0 +1,536 @@
+<!-- pages/ad-data.html — 投放数据 -->
+<style>
+/* --- KPI --- */
+.ad-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.ad-kpi-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 20px; }
+.ad-kpi-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.ad-kpi-value { font-size: 24px; font-weight: 700; color: var(--text); }
+.ad-kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* --- Filter bar --- */
+.ad-filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.ad-plat-btn { padding: 5px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--text-secondary); background: var(--surface); cursor: pointer; transition: all 0.15s; }
+.ad-plat-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.ad-plat-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(139,92,246,0.08); font-weight: 600; }
+
+/* --- Table --- */
+.ad-table-wrap { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+.ad-table-wrap table { width: 100%; border-collapse: collapse; }
+.ad-table-wrap thead { background: var(--bg); }
+.ad-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; }
+.ad-table-wrap th:hover { color: var(--text); }
+.ad-table-wrap th .sort-icon { font-size: 10px; margin-left: 2px; opacity: 0.4; }
+.ad-table-wrap th.sorted .sort-icon { opacity: 1; color: var(--accent2); }
+.ad-table-wrap td { padding: 10px 12px; font-size: 12.5px; color: var(--text); border-top: 1px solid var(--border-light); vertical-align: middle; }
+.ad-table-wrap tr:hover td { background: var(--bg); }
+
+/* --- Content cell --- */
+.ad-content-cell { display: flex; align-items: center; gap: 10px; min-width: 180px; }
+.ad-thumb { width: 40px; height: 54px; border-radius: 5px; overflow: hidden; background: #f0f0f0; flex-shrink: 0; }
+.ad-thumb video { width: 100%; height: 100%; object-fit: cover; }
+.ad-content-info { min-width: 0; }
+.ad-content-title { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.ad-content-tags { display: flex; gap: 4px; margin-top: 2px; }
+.ad-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #f3f4f6; color: #6b7280; }
+.ad-tag.brand { background: #ede9fe; color: #7c3aed; }
+
+/* --- Platform badge --- */
+.ad-plat-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; }
+.ad-plat-icon { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+
+/* --- ROAS chip --- */
+.ad-roas { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.ad-roas-high { background: #dcfce7; color: #15803d; }
+.ad-roas-mid  { background: #fef3c7; color: #b45309; }
+.ad-roas-low  { background: #fee2e2; color: #dc2626; }
+
+/* --- Actions --- */
+.ad-actions { display: flex; gap: 4px; }
+.ad-act-btn { padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: var(--surface); cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+.ad-act-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.ad-act-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+/* --- Modal --- */
+.ad-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+.ad-modal-overlay.show { display: flex; }
+.ad-modal { background: #fff; border-radius: 16px; width: 600px; max-height: 85vh; overflow-y: auto; padding: 28px; box-shadow: var(--shadow-lg); }
+.ad-modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.ad-form-group { margin-bottom: 14px; }
+.ad-form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; display: block; }
+.ad-form-input, .ad-form-select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); box-sizing: border-box; }
+.ad-form-input:focus, .ad-form-select:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
+.ad-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ad-form-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.ad-btn-primary { padding: 10px 24px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ad-btn-primary:hover { opacity: 0.9; }
+.ad-btn-ghost { padding: 10px 24px; background: none; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; cursor: pointer; color: var(--text-secondary); }
+.ad-modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+/* --- Num --- */
+.ad-num { font-variant-numeric: tabular-nums; }
+.ad-num-bold { font-weight: 600; }
+
+/* --- Empty --- */
+.ad-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.ad-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+@media (max-width: 1024px) { .ad-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .ad-kpi-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="page">
+  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h1 class="page-title">投放数据</h1>
+      <p class="page-subtitle">追踪广告投放效果，素材级 ROI 分析，优化投放策略</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="ad-btn-ghost" onclick="adShowCsvImport()">CSV 导入</button>
+      <button class="ad-btn-primary" onclick="adShowModal()">+ 录入投放数据</button>
+    </div>
+  </div>
+
+  <div class="ad-kpi-grid" id="adKpiGrid"></div>
+
+  <div class="ad-filter-bar">
+    <button class="ad-plat-btn active" onclick="adFilterPlatform(null, this)">全部</button>
+    <button class="ad-plat-btn" onclick="adFilterPlatform('juliang', this)">巨量引擎</button>
+    <button class="ad-plat-btn" onclick="adFilterPlatform('jvguang', this)">聚光平台</button>
+    <button class="ad-plat-btn" onclick="adFilterPlatform('tengxun', this)">腾讯广告</button>
+    <button class="ad-plat-btn" onclick="adFilterPlatform('ciliyinqing', this)">磁力引擎</button>
+    <button class="ad-plat-btn" onclick="adFilterPlatform('bilibili', this)">B站花火</button>
+    <button class="ad-plat-btn" onclick="adFilterPlatform('baidu', this)">百度信息流</button>
+    <div style="flex:1;"></div>
+    <select id="adBrandFilter" class="ad-form-select" style="width:auto;" onchange="adRender()">
+      <option value="">全部品牌</option>
+      <option value="人源活力">人源活力</option>
+    </select>
+  </div>
+
+  <div class="ad-table-wrap" id="adTableWrap"></div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="ad-modal-overlay" id="adModalOverlay" onclick="if(event.target===this)adCloseModal()">
+  <div class="ad-modal">
+    <h2 id="adModalTitle">录入投放数据</h2>
+    <input type="hidden" id="adEditId">
+
+    <div class="ad-form-group">
+      <label class="ad-form-label">关联内容任务</label>
+      <select id="adTaskSelect" class="ad-form-select">
+        <option value="">选择已完成的任务...</option>
+      </select>
+    </div>
+
+    <div class="ad-form-row">
+      <div class="ad-form-group">
+        <label class="ad-form-label">投放平台</label>
+        <select id="adPlatform" class="ad-form-select">
+          <option value="juliang">巨量引擎</option>
+          <option value="jvguang">聚光平台</option>
+          <option value="tengxun">腾讯广告</option>
+          <option value="ciliyinqing">磁力引擎</option>
+          <option value="bilibili">B站花火</option>
+          <option value="baidu">百度信息流</option>
+        </select>
+      </div>
+      <div class="ad-form-group">
+        <label class="ad-form-label">投放账户</label>
+        <input type="text" id="adAccount" class="ad-form-input" placeholder="账户名称">
+      </div>
+    </div>
+
+    <div class="ad-form-row">
+      <div class="ad-form-group">
+        <label class="ad-form-label">广告计划名称</label>
+        <input type="text" id="adCampaignName" class="ad-form-input" placeholder="计划名称">
+      </div>
+      <div class="ad-form-group">
+        <label class="ad-form-label">创意/素材名称</label>
+        <input type="text" id="adCreativeName" class="ad-form-input" placeholder="创意名称">
+      </div>
+    </div>
+
+    <div class="ad-form-row">
+      <div class="ad-form-group">
+        <label class="ad-form-label">投放开始日期</label>
+        <input type="date" id="adDateStart" class="ad-form-input">
+      </div>
+      <div class="ad-form-group">
+        <label class="ad-form-label">投放结束日期</label>
+        <input type="date" id="adDateEnd" class="ad-form-input">
+      </div>
+    </div>
+
+    <div class="ad-form-group">
+      <label class="ad-form-label">预算 (元)</label>
+      <input type="number" id="adBudget" class="ad-form-input" placeholder="0" min="0" step="0.01">
+    </div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin:18px 0 10px;">效果数据</div>
+    <div class="ad-form-row3">
+      <div class="ad-form-group">
+        <label class="ad-form-label">消耗 (元)</label>
+        <input type="number" id="adSpend" class="ad-form-input" placeholder="0" min="0" step="0.01">
+      </div>
+      <div class="ad-form-group">
+        <label class="ad-form-label">展现量</label>
+        <input type="number" id="adImpressions" class="ad-form-input" placeholder="0" min="0">
+      </div>
+      <div class="ad-form-group">
+        <label class="ad-form-label">点击量</label>
+        <input type="number" id="adClicks" class="ad-form-input" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="ad-form-row3">
+      <div class="ad-form-group">
+        <label class="ad-form-label">转化数</label>
+        <input type="number" id="adConversions" class="ad-form-input" placeholder="0" min="0">
+      </div>
+      <div class="ad-form-group">
+        <label class="ad-form-label">ROAS</label>
+        <input type="number" id="adRoas" class="ad-form-input" placeholder="0" min="0" step="0.01">
+      </div>
+      <div class="ad-form-group">
+        <label class="ad-form-label">CPA (元)</label>
+        <input type="number" id="adCpa" class="ad-form-input" placeholder="0" min="0" step="0.01">
+      </div>
+    </div>
+
+    <div class="ad-form-group">
+      <label class="ad-form-label">备注</label>
+      <input type="text" id="adNotes" class="ad-form-input" placeholder="可选">
+    </div>
+
+    <div class="ad-modal-footer">
+      <button class="ad-btn-ghost" onclick="adCloseModal()">取消</button>
+      <button class="ad-btn-primary" onclick="adSave()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div class="ad-modal-overlay" id="adCsvOverlay" onclick="if(event.target===this)adCloseCsv()">
+  <div class="ad-modal" style="width:440px;">
+    <h2>CSV 导入</h2>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+      上传 CSV 文件批量导入投放数据。<a href="javascript:void(0)" onclick="adDownloadTemplate()" style="color:var(--accent2);">下载模板</a>
+    </p>
+    <div class="ad-form-group">
+      <input type="file" id="adCsvFile" accept=".csv" class="ad-form-input">
+    </div>
+    <div class="ad-modal-footer">
+      <button class="ad-btn-ghost" onclick="adCloseCsv()">取消</button>
+      <button class="ad-btn-primary" onclick="adImportCsv()">导入</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var adRecords = [];
+var adContentTasks = [];
+var adPlatformFilter = null;
+var adSortKey = 'metrics.spend';
+var adSortAsc = false;
+
+const AD_PLATFORMS = {
+  juliang:      { name: '巨量引擎', color: '#fe2c55', icon: '巨' },
+  jvguang:      { name: '聚光平台', color: '#ff2442', icon: '聚' },
+  tengxun:      { name: '腾讯广告', color: '#07c160', icon: '腾' },
+  ciliyinqing:  { name: '磁力引擎', color: '#ff6600', icon: '磁' },
+  bilibili:     { name: 'B站花火', color: '#00a1d6', icon: 'B' },
+  baidu:        { name: '百度信息流', color: '#306cff', icon: '百' },
+};
+
+async function adLoad() {
+  try {
+    const [adResp, taskResp] = await Promise.all([
+      fetch('/api/ad-campaigns').then(r => r.json()),
+      fetch('/api/content-tasks').then(r => r.json()),
+    ]);
+    if (adResp.success) adRecords = adResp.records;
+    if (taskResp.success) adContentTasks = taskResp.tasks;
+  } catch (e) { console.error('Failed to load ad data:', e); }
+  adRenderKpi();
+  adRender();
+}
+
+function adFmt(n) {
+  if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(Math.round(n * 100) / 100);
+}
+
+function adMoney(n) {
+  if (n >= 10000) return '¥' + (n / 10000).toFixed(2) + '万';
+  return '¥' + n.toFixed(2);
+}
+
+function adRenderKpi() {
+  const grid = document.getElementById('adKpiGrid');
+  const r = adRecords;
+  const totalSpend = r.reduce((s, x) => s + (x.metrics?.spend || 0), 0);
+  const totalImpr = r.reduce((s, x) => s + (x.metrics?.impressions || 0), 0);
+  const totalClicks = r.reduce((s, x) => s + (x.metrics?.clicks || 0), 0);
+  const avgCtr = totalImpr > 0 ? (totalClicks / totalImpr * 100) : 0;
+  const totalConv = r.reduce((s, x) => s + (x.metrics?.conversions || 0), 0);
+  const weightedRoas = r.length > 0
+    ? r.reduce((s, x) => s + (x.metrics?.roas || 0) * (x.metrics?.spend || 0), 0) / (totalSpend || 1)
+    : 0;
+
+  grid.innerHTML = `
+    <div class="ad-kpi-card">
+      <div class="ad-kpi-label">总消耗</div>
+      <div class="ad-kpi-value">${adMoney(totalSpend)}</div>
+      <div class="ad-kpi-sub">${r.length} 个投放计划</div>
+    </div>
+    <div class="ad-kpi-card">
+      <div class="ad-kpi-label">总展现</div>
+      <div class="ad-kpi-value">${adFmt(totalImpr)}</div>
+      <div class="ad-kpi-sub">总点击 ${adFmt(totalClicks)}</div>
+    </div>
+    <div class="ad-kpi-card">
+      <div class="ad-kpi-label">平均 CTR</div>
+      <div class="ad-kpi-value">${avgCtr.toFixed(2)}%</div>
+      <div class="ad-kpi-sub">总转化 ${adFmt(totalConv)}</div>
+    </div>
+    <div class="ad-kpi-card">
+      <div class="ad-kpi-label">加权 ROAS</div>
+      <div class="ad-kpi-value" style="color:${weightedRoas >= 3 ? '#15803d' : weightedRoas >= 1 ? '#b45309' : '#dc2626'}">${weightedRoas.toFixed(2)}</div>
+      <div class="ad-kpi-sub">按消耗加权</div>
+    </div>`;
+}
+
+function adFilterPlatform(platform, btn) {
+  adPlatformFilter = platform;
+  document.querySelectorAll('.ad-plat-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  adRender();
+}
+
+function adSort(key) {
+  if (adSortKey === key) adSortAsc = !adSortAsc;
+  else { adSortKey = key; adSortAsc = false; }
+  adRender();
+}
+
+function adGetVal(rec, key) {
+  if (key.startsWith('metrics.')) return rec.metrics?.[key.replace('metrics.', '')] || 0;
+  if (key === 'date_start') return rec.date_start || '';
+  if (key === 'budget') return rec.budget || 0;
+  return 0;
+}
+
+function adRender() {
+  const wrap = document.getElementById('adTableWrap');
+  const brandFilter = document.getElementById('adBrandFilter').value;
+
+  let filtered = adRecords.slice();
+  if (adPlatformFilter) filtered = filtered.filter(r => r.platform === adPlatformFilter);
+  if (brandFilter) filtered = filtered.filter(r => r.brand === brandFilter);
+
+  filtered.sort((a, b) => {
+    const va = adGetVal(a, adSortKey), vb = adGetVal(b, adSortKey);
+    let cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb;
+    return adSortAsc ? cmp : -cmp;
+  });
+
+  if (filtered.length === 0) {
+    wrap.innerHTML = `<div class="ad-empty">
+      <div class="ad-empty-icon">💰</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px;">暂无投放数据</div>
+      <div style="font-size:13px;">点击「录入投放数据」或「CSV 导入」添加记录</div>
+    </div>`;
+    return;
+  }
+
+  const cols = [
+    { key: null, label: '素材', w: '' },
+    { key: null, label: '平台', w: '80px' },
+    { key: null, label: '计划', w: '130px' },
+    { key: 'metrics.spend', label: '消耗', w: '85px' },
+    { key: 'metrics.impressions', label: '展现', w: '80px' },
+    { key: 'metrics.clicks', label: '点击', w: '65px' },
+    { key: 'metrics.ctr', label: 'CTR', w: '60px' },
+    { key: 'metrics.conversions', label: '转化', w: '60px' },
+    { key: 'metrics.cpa', label: 'CPA', w: '70px' },
+    { key: 'metrics.roas', label: 'ROAS', w: '75px' },
+    { key: null, label: '操作', w: '100px' },
+  ];
+
+  let html = '<table><thead><tr>';
+  cols.forEach(c => {
+    const sorted = c.key === adSortKey;
+    const arrow = c.key ? (sorted ? (adSortAsc ? '▲' : '▼') : '▲') : '';
+    html += `<th${sorted ? ' class="sorted"' : ''}${c.key ? ` onclick="adSort('${c.key}')"` : ''}${c.w ? ` style="width:${c.w}"` : ''}>${c.label}${arrow ? `<span class="sort-icon">${arrow}</span>` : ''}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  filtered.forEach(r => {
+    const p = AD_PLATFORMS[r.platform] || { name: r.platform, color: '#999', icon: '?' };
+    const m = r.metrics || {};
+    const roas = m.roas || 0;
+    const roasCls = roas >= 3 ? 'ad-roas-high' : roas >= 1 ? 'ad-roas-mid' : 'ad-roas-low';
+
+    html += `<tr>
+      <td><div class="ad-content-cell">
+        ${r.video_url ? `<div class="ad-thumb"><video src="${adEsc(r.video_url)}" muted preload="metadata"></video></div>` : '<div class="ad-thumb" style="display:flex;align-items:center;justify-content:center;font-size:14px;">🎬</div>'}
+        <div class="ad-content-info">
+          <div class="ad-content-title" title="${adEsc(r.title)}">${adEsc(r.title || r.creative_name || '未命名')}</div>
+          <div class="ad-content-tags">
+            ${r.brand ? `<span class="ad-tag brand">${adEsc(r.brand)}</span>` : ''}
+            ${r.sku ? `<span class="ad-tag">${adEsc(r.sku)}</span>` : ''}
+          </div>
+        </div>
+      </div></td>
+      <td><div class="ad-plat-badge"><span class="ad-plat-icon" style="background:${p.color}">${p.icon}</span>${p.name}</div></td>
+      <td><div style="font-size:12px;">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;" title="${adEsc(r.campaign_name)}">${adEsc(r.campaign_name || '-')}</div>
+        <div style="color:var(--text-muted);font-size:11px;">${adEsc(r.date_start || '')}${r.date_end ? ' ~ ' + adEsc(r.date_end) : ''}</div>
+      </div></td>
+      <td class="ad-num ad-num-bold">${adMoney(m.spend || 0)}</td>
+      <td class="ad-num">${adFmt(m.impressions || 0)}</td>
+      <td class="ad-num">${adFmt(m.clicks || 0)}</td>
+      <td class="ad-num" style="font-weight:500;">${(m.ctr || 0).toFixed(2)}%</td>
+      <td class="ad-num">${adFmt(m.conversions || 0)}</td>
+      <td class="ad-num">¥${(m.cpa || 0).toFixed(1)}</td>
+      <td><span class="ad-roas ${roasCls}">${roas.toFixed(2)}</span></td>
+      <td><div class="ad-actions">
+        <button class="ad-act-btn" onclick="adEdit('${r.campaign_id}')">编辑</button>
+        <button class="ad-act-btn danger" onclick="adDelete('${r.campaign_id}')">删</button>
+      </div></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+// --- Modal ---
+function adShowModal(editRec) {
+  const overlay = document.getElementById('adModalOverlay');
+  document.getElementById('adModalTitle').textContent = editRec ? '编辑投放数据' : '录入投放数据';
+  document.getElementById('adEditId').value = editRec?.campaign_id || '';
+
+  const sel = document.getElementById('adTaskSelect');
+  sel.innerHTML = '<option value="">选择已完成的任务...</option>';
+  adContentTasks.filter(t => t.status === 'completed').forEach(t => {
+    sel.innerHTML += `<option value="${t.task_id}" ${editRec?.task_id === t.task_id ? 'selected' : ''}>${adEsc(t.title)} (${adEsc(t.brand)} ${adEsc(t.sku)})</option>`;
+  });
+
+  if (editRec) {
+    document.getElementById('adPlatform').value = editRec.platform || 'juliang';
+    document.getElementById('adAccount').value = editRec.account_name || '';
+    document.getElementById('adCampaignName').value = editRec.campaign_name || '';
+    document.getElementById('adCreativeName').value = editRec.creative_name || '';
+    document.getElementById('adDateStart').value = editRec.date_start || '';
+    document.getElementById('adDateEnd').value = editRec.date_end || '';
+    document.getElementById('adBudget').value = editRec.budget || 0;
+    document.getElementById('adSpend').value = editRec.metrics?.spend || 0;
+    document.getElementById('adImpressions').value = editRec.metrics?.impressions || 0;
+    document.getElementById('adClicks').value = editRec.metrics?.clicks || 0;
+    document.getElementById('adConversions').value = editRec.metrics?.conversions || 0;
+    document.getElementById('adRoas').value = editRec.metrics?.roas || 0;
+    document.getElementById('adCpa').value = editRec.metrics?.cpa || 0;
+    document.getElementById('adNotes').value = editRec.notes || '';
+  } else {
+    ['adAccount','adCampaignName','adCreativeName','adNotes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('adPlatform').value = 'juliang';
+    document.getElementById('adDateStart').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('adDateEnd').value = '';
+    ['adBudget','adSpend','adImpressions','adClicks','adConversions','adRoas','adCpa'].forEach(id => document.getElementById(id).value = '');
+  }
+  overlay.classList.add('show');
+}
+
+function adCloseModal() { document.getElementById('adModalOverlay').classList.remove('show'); }
+
+async function adSave() {
+  const editId = document.getElementById('adEditId').value;
+  const spend = parseFloat(document.getElementById('adSpend').value) || 0;
+  const impressions = parseInt(document.getElementById('adImpressions').value) || 0;
+  const clicks = parseInt(document.getElementById('adClicks').value) || 0;
+  const conversions = parseInt(document.getElementById('adConversions').value) || 0;
+
+  const data = {
+    task_id: document.getElementById('adTaskSelect').value,
+    platform: document.getElementById('adPlatform').value,
+    account_name: document.getElementById('adAccount').value,
+    campaign_name: document.getElementById('adCampaignName').value,
+    creative_name: document.getElementById('adCreativeName').value,
+    date_start: document.getElementById('adDateStart').value,
+    date_end: document.getElementById('adDateEnd').value,
+    budget: parseFloat(document.getElementById('adBudget').value) || 0,
+    metrics: {
+      spend: spend,
+      impressions: impressions,
+      clicks: clicks,
+      ctr: impressions > 0 ? +(clicks / impressions * 100).toFixed(2) : 0,
+      cpc: clicks > 0 ? +(spend / clicks).toFixed(2) : 0,
+      cpm: impressions > 0 ? +(spend / impressions * 1000).toFixed(2) : 0,
+      conversions: conversions,
+      cvr: clicks > 0 ? +(conversions / clicks * 100).toFixed(2) : 0,
+      cpa: parseFloat(document.getElementById('adCpa').value) || (conversions > 0 ? +(spend / conversions).toFixed(2) : 0),
+      roas: parseFloat(document.getElementById('adRoas').value) || 0,
+    },
+    notes: document.getElementById('adNotes').value,
+  };
+
+  try {
+    const url = editId ? `/api/ad-campaigns/${editId}` : '/api/ad-campaigns';
+    const method = editId ? 'PUT' : 'POST';
+    const resp = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const result = await resp.json();
+    if (result.success) { adCloseModal(); await adLoad(); }
+    else alert('保存失败: ' + JSON.stringify(result));
+  } catch (e) { alert('保存失败: ' + e.message); }
+}
+
+function adEdit(cid) {
+  const rec = adRecords.find(r => r.campaign_id === cid);
+  if (rec) adShowModal(rec);
+}
+
+async function adDelete(cid) {
+  if (!confirm('确认删除这条投放记录？')) return;
+  try {
+    const resp = await fetch(`/api/ad-campaigns/${cid}`, { method: 'DELETE' });
+    const result = await resp.json();
+    if (result.success) await adLoad();
+  } catch (e) { alert('删除失败: ' + e.message); }
+}
+
+// --- CSV ---
+function adShowCsvImport() { document.getElementById('adCsvOverlay').classList.add('show'); }
+function adCloseCsv() { document.getElementById('adCsvOverlay').classList.remove('show'); }
+
+function adDownloadTemplate() {
+  const csv = 'task_id,platform,campaign_name,creative_name,account_name,date_start,date_end,budget,spend,impressions,clicks,conversions,cpa,roas,notes\ne278f0e7,juliang,光子瓶推广计划,光子瓶开箱A,旗舰店,2026-03-24,2026-03-30,5000,3286.5,186420,5218,142,23.14,3.82,示例';
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ad_campaigns_template.csv';
+  a.click();
+}
+
+async function adImportCsv() {
+  const fileInput = document.getElementById('adCsvFile');
+  if (!fileInput.files.length) { alert('请选择 CSV 文件'); return; }
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  try {
+    const resp = await fetch('/api/ad-campaigns/import-csv', { method: 'POST', body: fd });
+    const result = await resp.json();
+    if (result.success) { alert(`成功导入 ${result.imported_count} 条记录`); adCloseCsv(); await adLoad(); }
+    else alert('导入失败: ' + JSON.stringify(result));
+  } catch (e) { alert('导入失败: ' + e.message); }
+}
+
+function adEsc(t) {
+  if (!t) return '';
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+adLoad();
+</script>

@@ -1,0 +1,374 @@
+<!-- pages/assets.html — 资产库 -->
+<style>
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.asset-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.asset-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.asset-thumb {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  position: relative;
+}
+.asset-count {
+  position: absolute;
+  bottom: 8px; right: 8px;
+  padding: 4px 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.asset-info { padding: 16px; }
+.asset-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.asset-meta { font-size: 12px; color: var(--text-secondary); }
+</style>
+
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">资产库</h1>
+    <p class="page-subtitle">统一管理品牌素材，AI智能标签</p>
+  </div>
+
+  <!-- 顶部统计栏 -->
+  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;">
+    <div class="card" style="padding: 16px;">
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">📦 总素材数</div>
+      <div style="font-size: 24px; font-weight: 700;">342</div>
+    </div>
+    <div class="card" style="padding: 16px;">
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">🎬 视频</div>
+      <div style="font-size: 24px; font-weight: 700;">142</div>
+    </div>
+    <div class="card" style="padding: 16px;">
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">🖼️ 图片</div>
+      <div style="font-size: 24px; font-weight: 700;">200</div>
+    </div>
+    <div class="card" style="padding: 16px;">
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">📊 文档</div>
+      <div style="font-size: 24px; font-weight: 700;">28</div>
+    </div>
+    <div class="card" style="padding: 16px;">
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">💾 存储用量</div>
+      <div style="font-size: 24px; font-weight: 700;">2.3GB <span style="font-size: 14px; color: var(--text-muted);">/ 10GB</span></div>
+    </div>
+  </div>
+
+  <!-- 存储用量进度条 -->
+  <div class="card" style="padding: 16px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <div style="font-size: 13px; font-weight: 600;">云空间使用情况</div>
+      <div style="font-size: 13px; color: var(--text-secondary);">已用 23% · 剩余 7.7GB</div>
+    </div>
+    <div style="width: 100%; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden;">
+      <div style="width: 23%; height: 100%; background: linear-gradient(90deg, #6366f1, #a78bfa); border-radius: 4px;"></div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" class="form-input" placeholder="🔍 搜索素材..." style="width: 300px;">
+    <div class="tab-group">
+      <button class="tab-btn active">产品素材</button>
+      <button class="tab-btn">其他素材</button>
+    </div>
+    <div class="tab-group">
+      <button class="tab-btn active">全部</button>
+      <button class="tab-btn">视频</button>
+      <button class="tab-btn">图片</button>
+    </div>
+    <select class="form-select" style="width: auto;">
+      <option>全部品牌</option>
+      <option>人源活力</option>
+      <option>蚂蚁阿福</option>
+      <option>蓝色光标</option>
+    </select>
+    <select class="form-select" style="width: auto;">
+      <option>排序：最近更新</option>
+      <option>排序：文件数量</option>
+      <option>排序：名称</option>
+    </select>
+    <div style="flex: 1;"></div>
+    <button class="btn-add" onclick="alert('新建分组')">+ 新建分组</button>
+    <button class="btn-add" onclick="alert('批量上传')">📤 批量上传</button>
+  </div>
+
+  <!-- 操作按钮增强区 -->
+  <div style="display: flex; gap: 8px; margin-bottom: 24px;">
+    <button class="quick-btn" onclick="alert('图片转视频功能')">🎞️ 图片转视频</button>
+    <button class="quick-btn" onclick="alert('智能拆解功能')">✂️ 智能拆解</button>
+    <button class="quick-btn" onclick="alert('AI自动标签功能')">🏷️ AI自动标签</button>
+    <button class="quick-btn" onclick="alert('批量编辑')">✏️ 批量编辑</button>
+  </div>
+
+  <!-- AI智能标签区域 -->
+  <div class="card" style="padding: 16px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+      <div style="font-size: 13px; font-weight: 600;">🤖 AI智能标签云</div>
+      <button class="quick-btn" onclick="alert('查看全部标签')">查看全部</button>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <span style="padding: 4px 12px; background: #e0e7ff; color: #4338ca; border-radius: 20px; font-size: 12px; cursor: pointer;">#智能驾驶 (52)</span>
+      <span style="padding: 4px 12px; background: #fce7f3; color: #be185d; border-radius: 20px; font-size: 12px; cursor: pointer;">#XNGP (45)</span>
+      <span style="padding: 4px 12px; background: #dcfce7; color: #15803d; border-radius: 20px; font-size: 12px; cursor: pointer;">#5C超快充 (38)</span>
+      <span style="padding: 4px 12px; background: #fef3c7; color: #b45309; border-radius: 20px; font-size: 12px; cursor: pointer;">#续航 (67)</span>
+      <span style="padding: 4px 12px; background: #dbeafe; color: #075985; border-radius: 20px; font-size: 12px; cursor: pointer;">#智能座舱 (34)</span>
+      <span style="padding: 4px 12px; background: #f3e8ff; color: #6b21a8; border-radius: 20px; font-size: 12px; cursor: pointer;">#品牌 (29)</span>
+      <span style="padding: 4px 12px; background: #fff7ed; color: #c2410c; border-radius: 20px; font-size: 12px; cursor: pointer;">#AI科技 (31)</span>
+      <span style="padding: 4px 12px; background: #fef2f2; color: #b91c1c; border-radius: 20px; font-size: 12px; cursor: pointer;">#新能源 (28)</span>
+      <span style="padding: 4px 12px; background: #f3e8ff; color: #7c3aed; border-radius: 20px; font-size: 12px; cursor: pointer;">#人源活力 (16)</span>
+      <span style="padding: 4px 12px; background: #fce7f3; color: #be185d; border-radius: 20px; font-size: 12px; cursor: pointer;">#护肤精华 (9)</span>
+      <span style="padding: 4px 12px; background: #fff7ed; color: #9a3412; border-radius: 20px; font-size: 12px; cursor: pointer;">#冻干面膜 (4)</span>
+    </div>
+  </div>
+
+  <div class="asset-grid">
+    <!-- ===== 人源活力 SKU（CDN 已上传）===== -->
+    <div class="asset-card" onclick="openAssetDetail('光感焕肤精华（光子瓶）')">
+      <div class="asset-thumb" style="background: url('https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310185155559439/product1.png'); background-size: cover; background-position: center;">
+        <div class="asset-count">7 个文件</div>
+        <div style="position: absolute; top: 8px; left: 8px; padding: 3px 8px; background: rgba(139,92,246,0.9); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>
+      </div>
+      <div class="asset-info">
+        <div class="asset-name">🧴 光感焕肤精华（光子瓶）</div>
+        <div class="asset-meta">
+          <span style="display: inline-block; padding: 2px 8px; background: #f3e8ff; color: #6b21a8; border-radius: 4px; font-size: 10px; margin-right: 6px;">人源活力</span>
+          <span style="display: inline-block; padding: 2px 8px; background: #fce7f3; color: #be185d; border-radius: 4px; font-size: 10px;">护肤精华</span>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">· CDN已上传 · 7张产品图</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="asset-card" onclick="openAssetDetail('焕活修护冻干面膜')">
+      <div class="asset-thumb" style="background: url('https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155631985917957/白底图.png'); background-size: cover; background-position: center;">
+        <div class="asset-count">4 个文件</div>
+        <div style="position: absolute; top: 8px; left: 8px; padding: 3px 8px; background: rgba(139,92,246,0.9); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>
+      </div>
+      <div class="asset-info">
+        <div class="asset-name">🧖 焕活修护冻干面膜</div>
+        <div class="asset-meta">
+          <span style="display: inline-block; padding: 2px 8px; background: #f3e8ff; color: #6b21a8; border-radius: 4px; font-size: 10px; margin-right: 6px;">人源活力</span>
+          <span style="display: inline-block; padding: 2px 8px; background: #fce7f3; color: #be185d; border-radius: 4px; font-size: 10px;">冻干面膜</span>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">· CDN已上传 · 4张</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="asset-card" onclick="openAssetDetail('鎏金抗衰次抛精华')">
+      <div class="asset-thumb" style="background: url('https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632103358479/img_v3_02vm_b50e3e12-6d87-4cd9-92c9-a8a51b0cb21g.png'); background-size: cover; background-position: center;">
+        <div class="asset-count">3 个文件</div>
+        <div style="position: absolute; top: 8px; left: 8px; padding: 3px 8px; background: rgba(139,92,246,0.9); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>
+      </div>
+      <div class="asset-info">
+        <div class="asset-name">✨ 鎏金抗衰次抛精华</div>
+        <div class="asset-meta">
+          <span style="display: inline-block; padding: 2px 8px; background: #f3e8ff; color: #6b21a8; border-radius: 4px; font-size: 10px; margin-right: 6px;">人源活力</span>
+          <span style="display: inline-block; padding: 2px 8px; background: #fce7f3; color: #be185d; border-radius: 4px; font-size: 10px;">次抛精华</span>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">· CDN已上传 · 3张</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="asset-card" onclick="openAssetDetail('玫瑰淡纹提拉眼油')">
+      <div class="asset-thumb" style="background: url('https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611150507687280655/人源活力-玫瑰淡纹提拉眼油.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #faf5ff;">
+        <div class="asset-count">2 个文件</div>
+        <div style="position: absolute; top: 8px; left: 8px; padding: 3px 8px; background: rgba(139,92,246,0.9); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>
+      </div>
+      <div class="asset-info">
+        <div class="asset-name">🌹 玫瑰淡纹提拉眼油</div>
+        <div class="asset-meta">
+          <span style="display: inline-block; padding: 2px 8px; background: #f3e8ff; color: #6b21a8; border-radius: 4px; font-size: 10px; margin-right: 6px;">人源活力</span>
+          <span style="display: inline-block; padding: 2px 8px; background: #fce7f3; color: #be185d; border-radius: 4px; font-size: 10px;">眼部护理</span>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">· CDN已上传 · 2张</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="asset-card" onclick="openAssetDetail('寡肽修护冻干球')">
+      <div class="asset-thumb" style="background: url('https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632002695173/白底.jpg'); background-size: cover; background-position: center;">
+        <div class="asset-count">2 个文件</div>
+        <div style="position: absolute; top: 8px; left: 8px; padding: 3px 8px; background: rgba(139,92,246,0.9); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>
+      </div>
+      <div class="asset-info">
+        <div class="asset-name">💊 寡肽修护冻干球</div>
+        <div class="asset-meta">
+          <span style="display: inline-block; padding: 2px 8px; background: #f3e8ff; color: #6b21a8; border-radius: 4px; font-size: 10px; margin-right: 6px;">人源活力</span>
+          <span style="display: inline-block; padding: 2px 8px; background: #fce7f3; color: #be185d; border-radius: 4px; font-size: 10px;">冻干球</span>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">· CDN已上传 · 2张</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 蚂蚁阿福素材 -->
+    <div class="asset-card" onclick="openAssetDetail('春节营销素材包', 35, '蚂蚁阿福', '营销素材', '2天前')">
+      <div class="asset-thumb" style="background: url('assets/mayi_afu/brand_overview.jpg'); background-size: cover; background-position: center;">
+        <div class="asset-count">35 个文件</div>
+      </div>
+      <div class="asset-info">
+        <div class="asset-name">春节营销素材包</div>
+        <div class="asset-meta">
+          <span style="display: inline-block; padding: 2px 8px; background: #dbeafe; color: #075985; border-radius: 4px; font-size: 10px; margin-right: 6px;">蚂蚁阿福</span>
+          营销素材 • 视频+图片
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">📅 更新于 2天前</div>
+      </div>
+    </div>
+    <div class="asset-card" onclick="openAssetDetail('品牌VI & Logo', 15, '蚂蚁阿福', '品牌素材', '5天前')">
+      <div class="asset-thumb" style="background: url('assets/mayi_afu/afu_logo.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #f3f4f6;">
+        <div class="asset-count">15 个文件</div>
+      </div>
+      <div class="asset-info">
+        <div class="asset-name">品牌VI & Logo</div>
+        <div class="asset-meta">
+          <span style="display: inline-block; padding: 2px 8px; background: #dbeafe; color: #075985; border-radius: 4px; font-size: 10px; margin-right: 6px;">蚂蚁阿福</span>
+          品牌素材 • 图片
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">📅 更新于 5天前</div>
+      </div>
+    </div>
+    <div class="asset-card" onclick="openAssetDetail('KOL合作素材', 42, '蚂蚁阿福', '营销素材', '1周前')">
+      <div class="asset-thumb" style="background: url('assets/mayi_afu/aiww_features.jpg'); background-size: cover; background-position: center;">
+        <div class="asset-count">42 个文件</div>
+      </div>
+      <div class="asset-info">
+        <div class="asset-name">KOL合作素材</div>
+        <div class="asset-meta">
+          <span style="display: inline-block; padding: 2px 8px; background: #dbeafe; color: #075985; border-radius: 4px; font-size: 10px; margin-right: 6px;">蚂蚁阿福</span>
+          营销素材 • 视频+图片
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">📅 更新于 1周前</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 素材详情弹窗 -->
+<div id="assetDetailModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; padding: 40px;">
+  <div style="max-width: 900px; margin: 0 auto; background: var(--surface); border-radius: 16px; overflow: hidden; max-height: 100%; display: flex; flex-direction: column;">
+    <div style="padding: 24px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <h3 id="modalTitle" style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">素材分组详情</h3>
+        <div id="modalMeta" style="font-size: 13px; color: var(--text-secondary);"></div>
+      </div>
+      <button onclick="closeAssetDetail()" style="padding: 8px 16px; background: transparent; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: pointer;">✕ 关闭</button>
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 24px;">
+      <div id="modalContent" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;"></div>
+    </div>
+    <div style="padding: 20px 24px; border-top: 1px solid var(--border-light); display: flex; gap: 12px; justify-content: flex-end;">
+      <button class="btn-sm" onclick="alert('下载全部文件')">⬇️ 下载全部</button>
+      <button class="btn-sm btn-primary" onclick="alert('使用该分组创作')">📤 使用该分组</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 人源活力 SKU CDN 图片库
+var RHC_ASSETS = {
+  '光感焕肤精华（光子瓶）': {
+    brand: '人源活力', series: '护肤精华',
+    files: [
+      { name: '光子瓶-瓶身实拍', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611208167203799055/光子瓶-瓶身1.jpg' },
+      { name: '光子瓶-产品正面图1', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310185155559439/product1.png' },
+      { name: '光子瓶-产品正面图2', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310207804801039/product2.png' },
+      { name: '光子瓶-产品正面图3', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-610310228860207119/product3.png' },
+      { name: '光子瓶-乳化液体', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037061129535503/80eae667-bdd2-419e-b027-970e049bbfcb.jpg' },
+      { name: '光子瓶-外包装', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037118759272453/92246334-9228-4f7a-a059-94306850a329.jpg' },
+      { name: '光子瓶-盒子打开', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612037147901296645/87bc1e3e-94fa-41aa-a857-10eb5e97ae37.jpg' }
+    ]
+  },
+  '焕活修护冻干面膜': {
+    brand: '人源活力', series: '冻干面膜',
+    files: [
+      { name: '冻干面膜-正装白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155631985917957/白底图.png' },
+      { name: '冻干面膜-上脸效果图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611474576492199941/542212f1b0584947be5c8eca9d0ebfa4.jpg' },
+      { name: '冻干面膜-场景展示1', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611295500565479429/img_v3_02c1_5df1cdc5-f39c-4ca9-9161-cd393cbe514g.png' },
+      { name: '冻干面膜-场景展示2', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611295500498370565/img_v3_02c1_adc3e52d-2001-41e5-85f0-5ad4a46a836g_MIDDLE.png' }
+    ]
+  },
+  '鎏金抗衰次抛精华': {
+    brand: '人源活力', series: '次抛精华',
+    files: [
+      { name: '次抛精华-场景展示1', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632103358479/img_v3_02vm_b50e3e12-6d87-4cd9-92c9-a8a51b0cb21g.png' },
+      { name: '次抛精华-场景展示2', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611329537828978703/img_v3_02vm_d452bd5f-efe8-498c-bdc3-dfa23d50aa6g.png' },
+      { name: '次抛精华-场景展示3', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611329537828978693/img_v3_02vn_89048105-3288-4f31-96c4-219e62aca18g.png' }
+    ]
+  },
+  '玫瑰淡纹提拉眼油': {
+    brand: '人源活力', series: '眼部护理',
+    files: [
+      { name: '眼油-正装产品白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611150507687280655/人源活力-玫瑰淡纹提拉眼油.png' },
+      { name: '眼油-小样产品图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611461650855231503/眼油小样.png' }
+    ]
+  },
+  '寡肽修护冻干球': {
+    brand: '人源活力', series: '冻干球',
+    files: [
+      { name: '冻干球-套装白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632002695173/白底.jpg' },
+      { name: '冻干球-单瓶产品图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611474678447341573/单瓶.png' }
+    ]
+  }
+};
+
+function openAssetDetail(name, fileCount, brand, series, updateTime) {
+  var modal = document.getElementById('assetDetailModal');
+  var sku = RHC_ASSETS[name];
+
+  if (sku) {
+    // 有真实 CDN 数据的人源活力 SKU
+    var files = sku.files;
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalMeta').textContent = sku.brand + ' \u2022 ' + sku.series + ' \u2022 ' + files.length + '个文件 \u2022 CDN已上传';
+
+    var html = '';
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      html += '<div style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform=\'scale(1.03)\'" onmouseout="this.style.transform=\'scale(1)\'">' +
+        '<div style="width: 100%; padding-bottom: 100%; border-radius: 8px; position: relative; margin-bottom: 8px; overflow: hidden; background: #f9fafb;">' +
+        '<img src="' + f.url + '" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display=\'none\'">' +
+        '<div style="position: absolute; bottom: 8px; right: 8px; padding: 4px 8px; background: rgba(139,92,246,0.85); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>' +
+        '</div>' +
+        '<div style="font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + f.name + '">' + f.name + '</div>' +
+        '<div style="font-size: 10px; color: var(--text-muted); margin-top: 2px; cursor: pointer;" onclick="event.stopPropagation(); navigator.clipboard.writeText(\'' + f.url + '\'); this.textContent=\'✅ 已复制\'">📋 复制CDN链接</div>' +
+        '</div>';
+    }
+    document.getElementById('modalContent').innerHTML = html;
+  } else {
+    // 其他品牌 — 占位展示
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalMeta').textContent = (brand||'') + ' \u2022 ' + (series||'') + ' \u2022 ' + (fileCount||0) + '个文件 \u2022 更新于' + (updateTime||'');
+    var html = '';
+    var types = ['image', 'image', 'video', 'image', 'image', 'video'];
+    for (var i = 0; i < Math.min(fileCount||6, 24); i++) {
+      var t = types[i % types.length];
+      var icon = t === 'video' ? '🎬' : '🖼️';
+      var bg = t === 'video' ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'linear-gradient(135deg, #ec4899, #d946ef)';
+      html += '<div style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform=\'scale(1.05)\'" onmouseout="this.style.transform=\'scale(1)\'">' +
+        '<div style="width: 100%; padding-bottom: 100%; background: ' + bg + '; border-radius: 8px; position: relative; margin-bottom: 8px;">' +
+        '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 32px;">' + icon + '</div>' +
+        '</div>' +
+        '<div style="font-size: 12px; font-weight: 500;">文件_' + String(i+1).padStart(2, '0') + '.' + (t === 'video' ? 'mp4' : 'jpg') + '</div>' +
+        '</div>';
+    }
+    document.getElementById('modalContent').innerHTML = html;
+  }
+  modal.style.display = 'block';
+}
+
+function closeAssetDetail() {
+  document.getElementById('assetDetailModal').style.display = 'none';
+}
+</script>

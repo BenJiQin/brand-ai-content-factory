@@ -1,0 +1,538 @@
+<!-- pages/social-media.html — 社媒数据 -->
+<style>
+/* --- KPI --- */
+.sm-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.sm-kpi-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 20px; }
+.sm-kpi-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.sm-kpi-value { font-size: 24px; font-weight: 700; color: var(--text); }
+.sm-kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* --- Filter bar --- */
+.sm-filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.sm-plat-btn { padding: 5px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--text-secondary); background: var(--surface); cursor: pointer; transition: all 0.15s; }
+.sm-plat-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.sm-plat-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(139,92,246,0.08); font-weight: 600; }
+
+/* --- Table card --- */
+.sm-table-wrap { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+.sm-table-wrap table { width: 100%; border-collapse: collapse; }
+.sm-table-wrap thead { background: var(--bg); }
+.sm-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; }
+.sm-table-wrap th:hover { color: var(--text); }
+.sm-table-wrap th .sort-icon { font-size: 10px; margin-left: 2px; opacity: 0.4; }
+.sm-table-wrap th.sorted .sort-icon { opacity: 1; color: var(--accent2); }
+.sm-table-wrap td { padding: 12px; font-size: 13px; color: var(--text); border-top: 1px solid var(--border-light); vertical-align: middle; }
+.sm-table-wrap tr:hover td { background: var(--bg); }
+
+/* --- Content cell --- */
+.sm-content-cell { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+.sm-thumb { width: 48px; height: 64px; border-radius: 6px; overflow: hidden; background: #f0f0f0; flex-shrink: 0; }
+.sm-thumb video { width: 100%; height: 100%; object-fit: cover; }
+.sm-content-info { min-width: 0; }
+.sm-content-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.sm-content-tags { display: flex; gap: 4px; margin-top: 3px; }
+.sm-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #f3f4f6; color: #6b7280; }
+.sm-tag.brand { background: #ede9fe; color: #7c3aed; }
+
+/* --- Platform badge --- */
+.sm-plat-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; }
+.sm-plat-icon { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+
+/* --- Completion bar --- */
+.sm-comp-wrap { display: flex; align-items: center; gap: 6px; }
+.sm-comp-bar { width: 40px; height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
+.sm-comp-fill { height: 100%; border-radius: 2px; }
+.sm-comp-text { font-size: 12px; font-weight: 600; }
+
+/* --- Actions --- */
+.sm-actions { display: flex; gap: 4px; }
+.sm-act-btn { padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; background: var(--surface); cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+.sm-act-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.sm-act-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+/* --- Modal --- */
+.sm-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+.sm-modal-overlay.show { display: flex; }
+.sm-modal { background: #fff; border-radius: 16px; width: 560px; max-height: 85vh; overflow-y: auto; padding: 28px; box-shadow: var(--shadow-lg); }
+.sm-modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.sm-form-group { margin-bottom: 16px; }
+.sm-form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+.sm-form-input, .sm-form-select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); box-sizing: border-box; }
+.sm-form-input:focus, .sm-form-select:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
+.sm-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sm-form-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.sm-btn-primary { padding: 10px 24px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.sm-btn-primary:hover { opacity: 0.9; }
+.sm-btn-ghost { padding: 10px 24px; background: none; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; cursor: pointer; color: var(--text-secondary); }
+.sm-modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+/* --- Empty state --- */
+.sm-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.sm-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+/* --- Number formatting --- */
+.sm-num { font-variant-numeric: tabular-nums; }
+.sm-num-highlight { font-weight: 600; color: var(--text); }
+
+/* --- Responsive --- */
+@media (max-width: 1024px) { .sm-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .sm-kpi-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="page">
+  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h1 class="page-title">社媒数据</h1>
+      <p class="page-subtitle">追踪 AI 生成内容在各社交媒体平台的发布效果</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="sm-btn-ghost" onclick="smShowCsvImport()">CSV 导入</button>
+      <button class="sm-btn-primary" onclick="smShowModal()">+ 录入发布数据</button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="sm-kpi-grid" id="smKpiGrid"></div>
+
+  <!-- Filter bar -->
+  <div class="sm-filter-bar">
+    <button class="sm-plat-btn active" onclick="smFilterPlatform(null, this)">全部</button>
+    <button class="sm-plat-btn" onclick="smFilterPlatform('douyin', this)">抖音</button>
+    <button class="sm-plat-btn" onclick="smFilterPlatform('xiaohongshu', this)">小红书</button>
+    <button class="sm-plat-btn" onclick="smFilterPlatform('kuaishou', this)">快手</button>
+    <button class="sm-plat-btn" onclick="smFilterPlatform('weixin', this)">微信视频号</button>
+    <button class="sm-plat-btn" onclick="smFilterPlatform('bilibili', this)">B站</button>
+    <button class="sm-plat-btn" onclick="smFilterPlatform('weibo', this)">微博</button>
+    <div style="flex:1;"></div>
+    <select id="smBrandFilter" class="sm-form-select" style="width:auto;" onchange="smRender()">
+      <option value="">全部品牌</option>
+      <option value="人源活力">人源活力</option>
+    </select>
+  </div>
+
+  <!-- Data Table -->
+  <div class="sm-table-wrap" id="smTableWrap"></div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="sm-modal-overlay" id="smModalOverlay" onclick="if(event.target===this)smCloseModal()">
+  <div class="sm-modal">
+    <h2 id="smModalTitle">录入发布数据</h2>
+    <input type="hidden" id="smEditId">
+
+    <div class="sm-form-group">
+      <label class="sm-form-label">关联内容任务</label>
+      <select id="smTaskSelect" class="sm-form-select" onchange="smOnTaskSelect()">
+        <option value="">选择已完成的任务...</option>
+      </select>
+    </div>
+
+    <div class="sm-form-row">
+      <div class="sm-form-group">
+        <label class="sm-form-label">发布平台</label>
+        <select id="smPlatform" class="sm-form-select">
+          <option value="douyin">抖音</option>
+          <option value="xiaohongshu">小红书</option>
+          <option value="kuaishou">快手</option>
+          <option value="weixin">微信视频号</option>
+          <option value="bilibili">B站</option>
+          <option value="weibo">微博</option>
+        </select>
+      </div>
+      <div class="sm-form-group">
+        <label class="sm-form-label">发布账号</label>
+        <input type="text" id="smAccount" class="sm-form-input" placeholder="账号名称">
+      </div>
+    </div>
+
+    <div class="sm-form-row">
+      <div class="sm-form-group">
+        <label class="sm-form-label">作品链接</label>
+        <input type="url" id="smUrl" class="sm-form-input" placeholder="https://...">
+      </div>
+      <div class="sm-form-group">
+        <label class="sm-form-label">发布日期</label>
+        <input type="date" id="smDate" class="sm-form-input">
+      </div>
+    </div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin:20px 0 12px;">效果数据</div>
+    <div class="sm-form-row3">
+      <div class="sm-form-group">
+        <label class="sm-form-label">播放量</label>
+        <input type="number" id="smViews" class="sm-form-input" placeholder="0" min="0">
+      </div>
+      <div class="sm-form-group">
+        <label class="sm-form-label">点赞</label>
+        <input type="number" id="smLikes" class="sm-form-input" placeholder="0" min="0">
+      </div>
+      <div class="sm-form-group">
+        <label class="sm-form-label">评论</label>
+        <input type="number" id="smComments" class="sm-form-input" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="sm-form-row3">
+      <div class="sm-form-group">
+        <label class="sm-form-label">转发</label>
+        <input type="number" id="smShares" class="sm-form-input" placeholder="0" min="0">
+      </div>
+      <div class="sm-form-group">
+        <label class="sm-form-label">收藏</label>
+        <input type="number" id="smFavorites" class="sm-form-input" placeholder="0" min="0">
+      </div>
+      <div class="sm-form-group">
+        <label class="sm-form-label">完播率 (%)</label>
+        <input type="number" id="smCompRate" class="sm-form-input" placeholder="0" min="0" max="100" step="0.1">
+      </div>
+    </div>
+
+    <div class="sm-form-group">
+      <label class="sm-form-label">备注</label>
+      <input type="text" id="smNotes" class="sm-form-input" placeholder="可选">
+    </div>
+
+    <div class="sm-modal-footer">
+      <button class="sm-btn-ghost" onclick="smCloseModal()">取消</button>
+      <button class="sm-btn-primary" onclick="smSave()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div class="sm-modal-overlay" id="smCsvOverlay" onclick="if(event.target===this)smCloseCsv()">
+  <div class="sm-modal" style="width:440px;">
+    <h2>CSV 导入</h2>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+      上传 CSV 文件批量导入发布数据。<a href="javascript:void(0)" onclick="smDownloadTemplate()" style="color:var(--accent2);">下载模板</a>
+    </p>
+    <div class="sm-form-group">
+      <input type="file" id="smCsvFile" accept=".csv" class="sm-form-input">
+    </div>
+    <div class="sm-modal-footer">
+      <button class="sm-btn-ghost" onclick="smCloseCsv()">取消</button>
+      <button class="sm-btn-primary" onclick="smImportCsv()">导入</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var smRecords = [];
+var smContentTasks = [];
+var smPlatformFilter = null;
+var smSortKey = 'published_at';
+var smSortAsc = false;
+
+const SM_PLATFORMS = {
+  douyin:      { name: '抖音',     color: '#000', icon: '抖' },
+  xiaohongshu: { name: '小红书',   color: '#ff2442', icon: '红' },
+  kuaishou:    { name: '快手',     color: '#ff6600', icon: '快' },
+  weixin:      { name: '视频号',   color: '#07c160', icon: '视' },
+  bilibili:    { name: 'B站',     color: '#00a1d6', icon: 'B' },
+  weibo:       { name: '微博',     color: '#ff8200', icon: '微' },
+};
+
+async function smLoad() {
+  try {
+    const [pubResp, taskResp] = await Promise.all([
+      fetch('/api/social-publish').then(r => r.json()),
+      fetch('/api/content-tasks').then(r => r.json()),
+    ]);
+    if (pubResp.success) smRecords = pubResp.records;
+    if (taskResp.success) smContentTasks = taskResp.tasks;
+  } catch (e) { console.error('Failed to load social data:', e); }
+  smRenderKpi();
+  smRender();
+}
+
+function smFmt(n) {
+  if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n);
+}
+
+function smRenderKpi() {
+  const grid = document.getElementById('smKpiGrid');
+  const records = smRecords;
+  const totalViews = records.reduce((s, r) => s + (r.metrics?.views || 0), 0);
+  const totalInteract = records.reduce((s, r) => s + (r.metrics?.likes || 0) + (r.metrics?.comments || 0) + (r.metrics?.shares || 0) + (r.metrics?.favorites || 0), 0);
+  const avgComp = records.length > 0
+    ? records.reduce((s, r) => s + (r.metrics?.completion_rate || 0), 0) / records.length
+    : 0;
+  grid.innerHTML = `
+    <div class="sm-kpi-card">
+      <div class="sm-kpi-label">总播放量</div>
+      <div class="sm-kpi-value">${smFmt(totalViews)}</div>
+      <div class="sm-kpi-sub">${records.length} 条发布记录</div>
+    </div>
+    <div class="sm-kpi-card">
+      <div class="sm-kpi-label">总互动量</div>
+      <div class="sm-kpi-value">${smFmt(totalInteract)}</div>
+      <div class="sm-kpi-sub">点赞+评论+转发+收藏</div>
+    </div>
+    <div class="sm-kpi-card">
+      <div class="sm-kpi-label">平均完播率</div>
+      <div class="sm-kpi-value">${(avgComp * 100).toFixed(1)}%</div>
+      <div class="sm-kpi-sub">全平台均值</div>
+    </div>
+    <div class="sm-kpi-card">
+      <div class="sm-kpi-label">覆盖平台</div>
+      <div class="sm-kpi-value">${new Set(records.map(r => r.platform)).size}</div>
+      <div class="sm-kpi-sub">已发布平台数</div>
+    </div>`;
+}
+
+function smFilterPlatform(platform, btn) {
+  smPlatformFilter = platform;
+  document.querySelectorAll('.sm-plat-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  smRender();
+}
+
+function smSort(key) {
+  if (smSortKey === key) { smSortAsc = !smSortAsc; }
+  else { smSortKey = key; smSortAsc = false; }
+  smRender();
+}
+
+function smGetSortValue(record, key) {
+  if (key === 'published_at') return record.published_at || '';
+  if (key.startsWith('metrics.')) {
+    const mk = key.replace('metrics.', '');
+    return record.metrics?.[mk] || 0;
+  }
+  return 0;
+}
+
+function smRender() {
+  const wrap = document.getElementById('smTableWrap');
+  const brandFilter = document.getElementById('smBrandFilter').value;
+
+  let filtered = smRecords.slice();
+  if (smPlatformFilter) filtered = filtered.filter(r => r.platform === smPlatformFilter);
+  if (brandFilter) filtered = filtered.filter(r => r.brand === brandFilter);
+
+  // Sort
+  filtered.sort((a, b) => {
+    const va = smGetSortValue(a, smSortKey);
+    const vb = smGetSortValue(b, smSortKey);
+    let cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb;
+    return smSortAsc ? cmp : -cmp;
+  });
+
+  if (filtered.length === 0) {
+    wrap.innerHTML = `<div class="sm-empty">
+      <div class="sm-empty-icon">📊</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px;">暂无发布数据</div>
+      <div style="font-size:13px;">点击「录入发布数据」或「CSV 导入」添加记录</div>
+    </div>`;
+    return;
+  }
+
+  const cols = [
+    { key: null, label: '内容', width: '' },
+    { key: null, label: '平台', width: '80px' },
+    { key: 'published_at', label: '发布日期', width: '100px' },
+    { key: 'metrics.views', label: '播放量', width: '90px' },
+    { key: 'metrics.likes', label: '点赞', width: '70px' },
+    { key: 'metrics.comments', label: '评论', width: '70px' },
+    { key: 'metrics.shares', label: '转发', width: '70px' },
+    { key: 'metrics.favorites', label: '收藏', width: '70px' },
+    { key: 'metrics.completion_rate', label: '完播率', width: '90px' },
+    { key: null, label: '操作', width: '120px' },
+  ];
+
+  let html = '<table><thead><tr>';
+  cols.forEach(col => {
+    const sorted = col.key === smSortKey;
+    const arrow = col.key ? (sorted ? (smSortAsc ? '▲' : '▼') : '▲') : '';
+    const cls = sorted ? ' class="sorted"' : '';
+    const onclick = col.key ? ` onclick="smSort('${col.key}')"` : '';
+    const w = col.width ? ` style="width:${col.width}"` : '';
+    html += `<th${cls}${onclick}${w}>${col.label}${arrow ? `<span class="sort-icon">${arrow}</span>` : ''}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  filtered.forEach(r => {
+    const p = SM_PLATFORMS[r.platform] || { name: r.platform, color: '#999', icon: '?' };
+    const m = r.metrics || {};
+    const compPct = ((m.completion_rate || 0) * 100).toFixed(0);
+    const compColor = m.completion_rate >= 0.5 ? '#22c55e' : m.completion_rate >= 0.3 ? '#f59e0b' : '#ef4444';
+
+    html += `<tr>
+      <td><div class="sm-content-cell">
+        ${r.video_url ? `<div class="sm-thumb"><video src="${smEsc(r.video_url)}" muted preload="metadata"></video></div>` : '<div class="sm-thumb" style="display:flex;align-items:center;justify-content:center;font-size:16px;">🎬</div>'}
+        <div class="sm-content-info">
+          <div class="sm-content-title" title="${smEsc(r.title)}">${smEsc(r.title || '未命名')}</div>
+          <div class="sm-content-tags">
+            ${r.brand ? `<span class="sm-tag brand">${smEsc(r.brand)}</span>` : ''}
+            ${r.sku ? `<span class="sm-tag">${smEsc(r.sku)}</span>` : ''}
+          </div>
+        </div>
+      </div></td>
+      <td><div class="sm-plat-badge">
+        <span class="sm-plat-icon" style="background:${p.color}">${p.icon}</span>
+        ${p.name}
+      </div></td>
+      <td class="sm-num">${smEsc(r.published_at || '-')}</td>
+      <td class="sm-num sm-num-highlight">${smFmt(m.views || 0)}</td>
+      <td class="sm-num">${smFmt(m.likes || 0)}</td>
+      <td class="sm-num">${smFmt(m.comments || 0)}</td>
+      <td class="sm-num">${smFmt(m.shares || 0)}</td>
+      <td class="sm-num">${smFmt(m.favorites || 0)}</td>
+      <td><div class="sm-comp-wrap">
+        <div class="sm-comp-bar"><div class="sm-comp-fill" style="width:${compPct}%;background:${compColor}"></div></div>
+        <span class="sm-comp-text" style="color:${compColor}">${compPct}%</span>
+      </div></td>
+      <td><div class="sm-actions">
+        <button class="sm-act-btn" onclick="smEdit('${r.publish_id}')">编辑</button>
+        ${r.task_id ? `<button class="sm-act-btn" onclick="location.hash='#contents'">原内容</button>` : ''}
+        <button class="sm-act-btn danger" onclick="smDelete('${r.publish_id}')">删</button>
+      </div></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+// --- Modal ---
+function smShowModal(editRecord) {
+  const overlay = document.getElementById('smModalOverlay');
+  document.getElementById('smModalTitle').textContent = editRecord ? '编辑发布数据' : '录入发布数据';
+  document.getElementById('smEditId').value = editRecord?.publish_id || '';
+
+  // Populate task selector
+  const sel = document.getElementById('smTaskSelect');
+  sel.innerHTML = '<option value="">选择已完成的任务...</option>';
+  smContentTasks.filter(t => t.status === 'completed').forEach(t => {
+    sel.innerHTML += `<option value="${t.task_id}" ${editRecord?.task_id === t.task_id ? 'selected' : ''}>${smEsc(t.title)} (${smEsc(t.brand)} ${smEsc(t.sku)})</option>`;
+  });
+
+  if (editRecord) {
+    document.getElementById('smPlatform').value = editRecord.platform || 'douyin';
+    document.getElementById('smAccount').value = editRecord.account_name || '';
+    document.getElementById('smUrl').value = editRecord.published_url || '';
+    document.getElementById('smDate').value = editRecord.published_at || '';
+    document.getElementById('smViews').value = editRecord.metrics?.views || 0;
+    document.getElementById('smLikes').value = editRecord.metrics?.likes || 0;
+    document.getElementById('smComments').value = editRecord.metrics?.comments || 0;
+    document.getElementById('smShares').value = editRecord.metrics?.shares || 0;
+    document.getElementById('smFavorites').value = editRecord.metrics?.favorites || 0;
+    document.getElementById('smCompRate').value = ((editRecord.metrics?.completion_rate || 0) * 100).toFixed(1);
+    document.getElementById('smNotes').value = editRecord.notes || '';
+  } else {
+    document.getElementById('smPlatform').value = 'douyin';
+    document.getElementById('smAccount').value = '';
+    document.getElementById('smUrl').value = '';
+    document.getElementById('smDate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('smViews').value = '';
+    document.getElementById('smLikes').value = '';
+    document.getElementById('smComments').value = '';
+    document.getElementById('smShares').value = '';
+    document.getElementById('smFavorites').value = '';
+    document.getElementById('smCompRate').value = '';
+    document.getElementById('smNotes').value = '';
+  }
+  overlay.classList.add('show');
+}
+
+function smCloseModal() { document.getElementById('smModalOverlay').classList.remove('show'); }
+
+function smOnTaskSelect() {
+  const taskId = document.getElementById('smTaskSelect').value;
+  // Auto-fill is handled server-side, just store selection
+}
+
+async function smSave() {
+  const editId = document.getElementById('smEditId').value;
+  const data = {
+    task_id: document.getElementById('smTaskSelect').value,
+    platform: document.getElementById('smPlatform').value,
+    account_name: document.getElementById('smAccount').value,
+    published_url: document.getElementById('smUrl').value,
+    published_at: document.getElementById('smDate').value,
+    metrics: {
+      views: parseInt(document.getElementById('smViews').value) || 0,
+      likes: parseInt(document.getElementById('smLikes').value) || 0,
+      comments: parseInt(document.getElementById('smComments').value) || 0,
+      shares: parseInt(document.getElementById('smShares').value) || 0,
+      favorites: parseInt(document.getElementById('smFavorites').value) || 0,
+      completion_rate: (parseFloat(document.getElementById('smCompRate').value) || 0) / 100,
+    },
+    notes: document.getElementById('smNotes').value,
+  };
+
+  try {
+    let resp;
+    if (editId) {
+      resp = await fetch(`/api/social-publish/${editId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+      });
+    } else {
+      resp = await fetch('/api/social-publish', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+      });
+    }
+    const result = await resp.json();
+    if (result.success) {
+      smCloseModal();
+      await smLoad();
+    } else {
+      alert('保存失败: ' + JSON.stringify(result));
+    }
+  } catch (e) { alert('保存失败: ' + e.message); }
+}
+
+function smEdit(publishId) {
+  const record = smRecords.find(r => r.publish_id === publishId);
+  if (record) smShowModal(record);
+}
+
+async function smDelete(publishId) {
+  if (!confirm('确认删除这条发布记录？')) return;
+  try {
+    const resp = await fetch(`/api/social-publish/${publishId}`, { method: 'DELETE' });
+    const result = await resp.json();
+    if (result.success) await smLoad();
+  } catch (e) { alert('删除失败: ' + e.message); }
+}
+
+// --- CSV ---
+function smShowCsvImport() { document.getElementById('smCsvOverlay').classList.add('show'); }
+function smCloseCsv() { document.getElementById('smCsvOverlay').classList.remove('show'); }
+
+function smDownloadTemplate() {
+  const csv = 'task_id,platform,account_name,published_url,published_at,views,likes,comments,shares,favorites,completion_rate,notes\ne278f0e7,douyin,人源活力官方号,https://example.com,2026-03-24,10000,500,100,50,200,0.42,示例数据';
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'social_publish_template.csv';
+  a.click();
+}
+
+async function smImportCsv() {
+  const fileInput = document.getElementById('smCsvFile');
+  if (!fileInput.files.length) { alert('请选择 CSV 文件'); return; }
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  try {
+    const resp = await fetch('/api/social-publish/import-csv', { method: 'POST', body: fd });
+    const result = await resp.json();
+    if (result.success) {
+      alert(`成功导入 ${result.imported_count} 条记录`);
+      smCloseCsv();
+      await smLoad();
+    } else {
+      alert('导入失败: ' + JSON.stringify(result));
+    }
+  } catch (e) { alert('导入失败: ' + e.message); }
+}
+
+function smEsc(t) {
+  if (!t) return '';
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Init
+smLoad();
+</script>
