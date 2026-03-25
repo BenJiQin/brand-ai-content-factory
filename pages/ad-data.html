@@ -14,10 +14,10 @@
 .ad-plat-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(139,92,246,0.08); font-weight: 600; }
 
 /* --- Table --- */
-.ad-table-wrap { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+.ad-table-wrap { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: auto; max-height: calc(100vh - 320px); }
 .ad-table-wrap table { width: 100%; border-collapse: collapse; }
-.ad-table-wrap thead { background: var(--bg); }
-.ad-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; }
+.ad-table-wrap thead { background: var(--bg); position: sticky; top: 0; z-index: 2; }
+.ad-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; background: var(--bg); }
 .ad-table-wrap th:hover { color: var(--text); }
 .ad-table-wrap th .sort-icon { font-size: 10px; margin-left: 2px; opacity: 0.4; }
 .ad-table-wrap th.sorted .sort-icon { opacity: 1; color: var(--accent2); }
@@ -74,6 +74,20 @@
 .ad-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
 .ad-empty-icon { font-size: 40px; margin-bottom: 12px; }
 
+/* --- Chat panel --- */
+.ad-chat-panel { background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; margin-top: 16px; box-shadow: 0 -2px 8px rgba(0,0,0,0.03); }
+.ad-chat-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; user-select: none; }
+.ad-chat-header h3 { font-size: 13px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px; }
+.ad-chat-body { display: none; max-height: 280px; overflow-y: auto; padding: 0 16px 12px; }
+.ad-chat-body.open { display: block; }
+.ad-chat-input-row { display: none; gap: 8px; padding: 0 16px 12px; }
+.ad-chat-input-row.open { display: flex; }
+.ad-chat-input-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); }
+.ad-chat-input-row input:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
+.ad-chat-msg { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.ad-chat-msg.user { background: rgba(139,92,246,0.08); margin-left: 40px; }
+.ad-chat-msg.ai { background: var(--bg); margin-right: 20px; }
+
 @media (max-width: 1024px) { .ad-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) { .ad-kpi-grid { grid-template-columns: 1fr; } }
 </style>
@@ -108,6 +122,19 @@
   </div>
 
   <div class="ad-table-wrap" id="adTableWrap"></div>
+
+  <!-- AI Chat Panel -->
+  <div class="ad-chat-panel">
+    <div class="ad-chat-header" onclick="adToggleChat()">
+      <h3><span style="font-size:15px;">🧴</span> 小源 · 数据助手</h3>
+      <span id="adChatToggle" style="font-size:11px;color:var(--text-muted);">展开 ▾</span>
+    </div>
+    <div class="ad-chat-body" id="adChatBody"></div>
+    <div class="ad-chat-input-row" id="adChatInputRow">
+      <input type="text" id="adChatInput" placeholder="问小源：投放分析、ROI优化、预算建议..." onkeydown="if(event.key==='Enter'&&!event.isComposing)adSendChat()">
+      <button class="ad-btn-primary" style="padding:8px 16px;font-size:12px;white-space:nowrap;" onclick="adSendChat()">发送</button>
+    </div>
+  </div>
 </div>
 
 <!-- Add/Edit Modal -->
@@ -210,19 +237,21 @@
   </div>
 </div>
 
-<!-- CSV Import Modal -->
-<div class="ad-modal-overlay" id="adCsvOverlay" onclick="if(event.target===this)adCloseCsv()">
-  <div class="ad-modal" style="width:440px;">
-    <h2>CSV 导入</h2>
+<!-- CSV Import Modal with AI Chat -->
+<div class="ad-modal-overlay" id="adCsvOverlay" onclick="if(event.target===this&&!adImporting)adCloseCsv()">
+  <div class="ad-modal" style="width:560px;">
+    <h2 style="display:flex;align-items:center;gap:8px;">🤖 AI 智能导入</h2>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
-      上传 CSV 文件批量导入投放数据。<a href="javascript:void(0)" onclick="adDownloadTemplate()" style="color:var(--accent2);">下载模板</a>
+      上传任意平台的投放数据 CSV，AI 自动识别格式并计算 CTR/CPA/ROAS 等衍生指标
     </p>
-    <div class="ad-form-group">
+    <div class="ad-form-group" id="adCsvUploadArea">
       <input type="file" id="adCsvFile" accept=".csv" class="ad-form-input">
     </div>
+    <div id="adAiChat" style="display:none;background:var(--bg);border:1px solid var(--border-light);border-radius:10px;padding:16px;max-height:360px;overflow-y:auto;font-size:13px;line-height:1.8;">
+    </div>
     <div class="ad-modal-footer">
-      <button class="ad-btn-ghost" onclick="adCloseCsv()">取消</button>
-      <button class="ad-btn-primary" onclick="adImportCsv()">导入</button>
+      <button class="ad-btn-ghost" id="adCsvCancelBtn" onclick="adCloseCsv()">取消</button>
+      <button class="ad-btn-primary" id="adCsvImportBtn" onclick="adImportCsv()">开始导入</button>
     </div>
   </div>
 </div>
@@ -349,13 +378,18 @@ function adRender() {
     { key: null, label: '素材', w: '' },
     { key: null, label: '平台', w: '80px' },
     { key: null, label: '计划', w: '130px' },
-    { key: 'metrics.spend', label: '消耗', w: '85px' },
-    { key: 'metrics.impressions', label: '展现', w: '80px' },
-    { key: 'metrics.clicks', label: '点击', w: '65px' },
-    { key: 'metrics.ctr', label: 'CTR', w: '60px' },
-    { key: 'metrics.conversions', label: '转化', w: '60px' },
-    { key: 'metrics.cpa', label: 'CPA', w: '70px' },
-    { key: 'metrics.roas', label: 'ROAS', w: '75px' },
+    { key: 'metrics.spend', label: '消耗', w: '80px' },
+    { key: 'metrics.impressions', label: '展现', w: '75px' },
+    { key: 'metrics.clicks', label: '点击', w: '60px' },
+    { key: 'metrics.ctr', label: 'CTR', w: '58px' },
+    { key: 'metrics.cpc', label: 'CPC', w: '60px' },
+    { key: 'metrics.cpm', label: 'CPM', w: '60px' },
+    { key: 'metrics.conversions', label: '转化', w: '55px' },
+    { key: 'metrics.cvr', label: 'CVR', w: '58px' },
+    { key: 'metrics.cpa', label: 'CPA', w: '65px' },
+    { key: 'metrics.gmv', label: 'GMV', w: '80px' },
+    { key: 'metrics.roas', label: 'ROAS', w: '65px' },
+    { key: 'metrics.gpm', label: 'GPM', w: '65px' },
     { key: null, label: '操作', w: '100px' },
   ];
 
@@ -373,29 +407,47 @@ function adRender() {
     const roas = m.roas || 0;
     const roasCls = roas >= 3 ? 'ad-roas-high' : roas >= 1 ? 'ad-roas-mid' : 'ad-roas-low';
 
+    const playUrl = r.published_url || r.extra?.['播放链接'] || '';
+    const thumbContent = r.video_url
+      ? `<div class="ad-thumb"><video src="${adEsc(r.video_url)}" muted preload="metadata"></video></div>`
+      : '<div class="ad-thumb" style="display:flex;align-items:center;justify-content:center;font-size:14px;">🎬</div>';
+    const titleText = adEsc(r.title || r.creative_name || '未命名');
+    const linkWrap = (inner) => playUrl ? `<a href="${adEsc(playUrl)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">${inner}</a>` : inner;
+    // Show account_name for千川 data, otherwise brand/sku tags
+    const isQc = r.extra?.['作品ID'];
+    const subtag = isQc
+      ? (r.account_name ? `<span class="ad-tag brand">${adEsc(r.account_name)}</span>` : '')
+      : `${r.brand ? `<span class="ad-tag brand">${adEsc(r.brand)}</span>` : ''}${r.sku ? `<span class="ad-tag">${adEsc(r.sku)}</span>` : ''}`;
+    // Campaign/date: if no distinct range, just show date_start
+    const dateDisplay = (r.date_end && r.date_end !== r.date_start)
+      ? `${adEsc(r.date_start)} ~ ${adEsc(r.date_end)}`
+      : adEsc(r.date_start || '');
+    const campaignDisplay = (isQc || !r.campaign_name || r.campaign_name === r.title?.slice(0, 40))
+      ? dateDisplay
+      : `<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;" title="${adEsc(r.campaign_name)}">${adEsc(r.campaign_name)}</div><div style="color:var(--text-muted);font-size:11px;">${dateDisplay}</div>`;
+
     html += `<tr>
       <td><div class="ad-content-cell">
-        ${r.video_url ? `<div class="ad-thumb"><video src="${adEsc(r.video_url)}" muted preload="metadata"></video></div>` : '<div class="ad-thumb" style="display:flex;align-items:center;justify-content:center;font-size:14px;">🎬</div>'}
+        ${linkWrap(thumbContent)}
         <div class="ad-content-info">
-          <div class="ad-content-title" title="${adEsc(r.title)}">${adEsc(r.title || r.creative_name || '未命名')}</div>
-          <div class="ad-content-tags">
-            ${r.brand ? `<span class="ad-tag brand">${adEsc(r.brand)}</span>` : ''}
-            ${r.sku ? `<span class="ad-tag">${adEsc(r.sku)}</span>` : ''}
-          </div>
+          <div class="ad-content-title" title="${adEsc(r.title)}">${linkWrap(titleText)}</div>
+          <div class="ad-content-tags">${subtag}</div>
         </div>
       </div></td>
       <td><div class="ad-plat-badge"><span class="ad-plat-icon" style="background:${p.color}">${p.icon}</span>${p.name}</div></td>
-      <td><div style="font-size:12px;">
-        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;" title="${adEsc(r.campaign_name)}">${adEsc(r.campaign_name || '-')}</div>
-        <div style="color:var(--text-muted);font-size:11px;">${adEsc(r.date_start || '')}${r.date_end ? ' ~ ' + adEsc(r.date_end) : ''}</div>
-      </div></td>
+      <td><div style="font-size:12px;">${campaignDisplay}</div></td>
       <td class="ad-num ad-num-bold">${adMoney(m.spend || 0)}</td>
       <td class="ad-num">${adFmt(m.impressions || 0)}</td>
       <td class="ad-num">${adFmt(m.clicks || 0)}</td>
-      <td class="ad-num" style="font-weight:500;">${(m.ctr || 0).toFixed(2)}%</td>
+      <td class="ad-num" style="font-weight:500;">${((m.ctr || 0) * 100).toFixed(2)}%</td>
+      <td class="ad-num">¥${(m.cpc || 0).toFixed(2)}</td>
+      <td class="ad-num">¥${(m.cpm || 0).toFixed(1)}</td>
       <td class="ad-num">${adFmt(m.conversions || 0)}</td>
+      <td class="ad-num" style="font-weight:500;">${((m.cvr || 0) * 100).toFixed(2)}%</td>
       <td class="ad-num">¥${(m.cpa || 0).toFixed(1)}</td>
+      <td class="ad-num ad-num-bold">${adMoney(m.gmv || 0)}</td>
       <td><span class="ad-roas ${roasCls}">${roas.toFixed(2)}</span></td>
+      <td class="ad-num">¥${(m.gpm || 0).toFixed(1)}</td>
       <td><div class="ad-actions">
         <button class="ad-act-btn" onclick="adEdit('${r.campaign_id}')">编辑</button>
         <button class="ad-act-btn danger" onclick="adDelete('${r.campaign_id}')">删</button>
@@ -502,34 +554,190 @@ async function adDelete(cid) {
 }
 
 // --- CSV ---
-function adShowCsvImport() { document.getElementById('adCsvOverlay').classList.add('show'); }
-function adCloseCsv() { document.getElementById('adCsvOverlay').classList.remove('show'); }
+function adShowCsvImport() {
+  document.getElementById('adCsvOverlay').classList.add('show');
+  document.getElementById('adAiChat').style.display = 'none';
+  document.getElementById('adAiChat').innerHTML = '';
+  document.getElementById('adCsvUploadArea').style.display = '';
+  document.getElementById('adCsvImportBtn').disabled = false;
+  document.getElementById('adCsvImportBtn').textContent = '开始导入';
+  document.getElementById('adCsvImportBtn').onclick = adImportCsv;
+  document.getElementById('adCsvCancelBtn').style.display = '';
+}
+function adCloseCsv() { if (!adImporting) document.getElementById('adCsvOverlay').classList.remove('show'); }
 
-function adDownloadTemplate() {
-  const csv = 'task_id,platform,campaign_name,creative_name,account_name,date_start,date_end,budget,spend,impressions,clicks,conversions,cpa,roas,notes\ne278f0e7,juliang,光子瓶推广计划,光子瓶开箱A,旗舰店,2026-03-24,2026-03-30,5000,3286.5,186420,5218,142,23.14,3.82,示例';
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'ad_campaigns_template.csv';
-  a.click();
+var adImporting = false;
+
+function adAppendChat(html, cls) {
+  const chat = document.getElementById('adAiChat');
+  const div = document.createElement('div');
+  div.style.marginBottom = '6px';
+  if (cls) div.className = cls;
+  div.innerHTML = html;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
 async function adImportCsv() {
   const fileInput = document.getElementById('adCsvFile');
   if (!fileInput.files.length) { alert('请选择 CSV 文件'); return; }
+
+  adImporting = true;
+  const chat = document.getElementById('adAiChat');
+  chat.style.display = 'block';
+  chat.innerHTML = '';
+  document.getElementById('adCsvImportBtn').disabled = true;
+  document.getElementById('adCsvImportBtn').textContent = '处理中...';
+  document.getElementById('adCsvUploadArea').style.display = 'none';
+
+  adAppendChat('📤 <strong>开始上传文件...</strong>');
+
   const fd = new FormData();
   fd.append('file', fileInput.files[0]);
+
   try {
-    const resp = await fetch('/api/ad-campaigns/import-csv', { method: 'POST', body: fd });
-    const result = await resp.json();
-    if (result.success) { alert(`成功导入 ${result.imported_count} 条记录`); adCloseCsv(); await adLoad(); }
-    else alert('导入失败: ' + JSON.stringify(result));
-  } catch (e) { alert('导入失败: ' + e.message); }
+    const resp = await fetch('/api/import/smart-csv?target=ad', { method: 'POST', body: fd });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let summaryText = '';
+    let summaryEl = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+        try {
+          const obj = JSON.parse(data);
+          if (obj.event === 'progress') {
+            adAppendChat(obj.text);
+          } else if (obj.event === 'mapping') {
+            adAppendChat(`🎯 <strong>平台: ${obj.platform}</strong> | 映射 ${obj.mapped} 字段 | ${obj.unmapped_count} 个未映射`, '');
+          } else if (obj.event === 'result') {
+            const s = obj.stats || {};
+            let statsHtml = `<div style="margin:8px 0;padding:10px 14px;background:var(--surface);border:1px solid var(--border-light);border-radius:8px;">`;
+            statsHtml += `<div style="font-weight:700;margin-bottom:6px;">📊 入库统计</div>`;
+            statsHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;">`;
+            statsHtml += `<span>导入记录: <strong>${obj.imported_count}</strong></span>`;
+            statsHtml += `<span>衍生指标: <strong>${obj.derived_count}</strong> 条</span>`;
+            if (s.total_spend) statsHtml += `<span>总消耗: <strong>¥${s.total_spend.toFixed(0)}</strong></span>`;
+            if (s.total_impressions) statsHtml += `<span>总展现: <strong>${(s.total_impressions/10000).toFixed(1)}万</strong></span>`;
+            if (s.total_clicks) statsHtml += `<span>总点击: <strong>${s.total_clicks.toFixed(0)}</strong></span>`;
+            if (s.total_conversions) statsHtml += `<span>总转化: <strong>${s.total_conversions.toFixed(0)}</strong></span>`;
+            if (s.avg_roas) statsHtml += `<span>平均ROAS: <strong>${s.avg_roas.toFixed(2)}</strong></span>`;
+            statsHtml += `</div></div>`;
+            adAppendChat(statsHtml);
+          } else if (obj.event === 'summary') {
+            if (!summaryEl) {
+              adAppendChat('<div style="margin-top:8px;padding:12px 14px;background:linear-gradient(135deg,rgba(99,102,241,0.06),rgba(139,92,246,0.06));border:1px solid rgba(139,92,246,0.15);border-radius:8px;"><div style="font-weight:700;margin-bottom:6px;">🧠 AI 分析</div><div id="adSummaryContent" style="font-size:12.5px;line-height:1.7;"></div></div>');
+              summaryEl = document.getElementById('adSummaryContent');
+            }
+            summaryText += obj.text;
+            summaryEl.innerHTML = summaryText
+              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\n/g, '<br>');
+            chat.scrollTop = chat.scrollHeight;
+          } else if (obj.event === 'error') {
+            adAppendChat(`❌ <span style="color:#dc2626;">${obj.message}</span>`);
+          }
+        } catch {}
+      }
+    }
+  } catch (e) {
+    adAppendChat(`❌ <span style="color:#dc2626;">请求失败: ${e.message}</span>`);
+  }
+
+  adImporting = false;
+  const btn = document.getElementById('adCsvImportBtn');
+  btn.disabled = false;
+  btn.textContent = '完成';
+  btn.onclick = async () => { adCloseCsv(); await adLoad(); };
+  document.getElementById('adCsvCancelBtn').style.display = 'none';
 }
 
 function adEsc(t) {
   if (!t) return '';
   return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// --- AI Chat Panel ---
+var adChatMessages = [];
+var adChatOpen = false;
+var adChatStreaming = false;
+
+function adToggleChat() {
+  adChatOpen = !adChatOpen;
+  document.getElementById('adChatBody').classList.toggle('open', adChatOpen);
+  document.getElementById('adChatInputRow').classList.toggle('open', adChatOpen);
+  document.getElementById('adChatToggle').textContent = adChatOpen ? '收起 ▴' : '展开 ▾';
+  if (adChatOpen) document.getElementById('adChatInput').focus();
+}
+
+function adRenderChat() {
+  const body = document.getElementById('adChatBody');
+  body.innerHTML = adChatMessages.map(m => {
+    let html = adEsc(m.content).replace(/\n/g, '<br>').replace(/&lt;!--ACTION:.*?--&gt;/g, '');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    return `<div class="ad-chat-msg ${m.role === 'user' ? 'user' : 'ai'}">${html || '<span style="color:var(--text-muted);">思考中...</span>'}</div>`;
+  }).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
+async function adSendChat() {
+  if (adChatStreaming) return;
+  const input = document.getElementById('adChatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  adChatMessages.push({ role: 'user', content: text });
+  adChatMessages.push({ role: 'assistant', content: '' });
+  adRenderChat();
+  adChatStreaming = true;
+
+  try {
+    const resp = await fetch('/api/data-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: adChatMessages.filter(m => m.content), page: 'ad' })
+    });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+        try {
+          const obj = JSON.parse(data);
+          if (obj.text) {
+            adChatMessages[adChatMessages.length - 1].content += obj.text;
+            adRenderChat();
+          }
+          if (obj.actions_executed) {
+            await adLoad();
+          }
+        } catch {}
+      }
+    }
+  } catch (e) {
+    adChatMessages[adChatMessages.length - 1].content += '\n⚠️ 请求失败: ' + e.message;
+    adRenderChat();
+  }
+  adChatStreaming = false;
 }
 
 adLoad();

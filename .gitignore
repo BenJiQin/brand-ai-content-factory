@@ -5,3 +5,11 @@ __pycache__/
 .env
 node_modules/
 .claude/
+
+# Runtime data
+data/
+uploads/
+videos/
+
+# OS files
+Thumbs.db

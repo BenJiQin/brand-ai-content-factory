@@ -338,6 +338,15 @@ function ctRenderCard(task) {
       </div>
     </div>
     <div class="ct-task-body" id="ct-body-${task.task_id}">
+      ${task.final_video_url ? `<div class="ct-section-label">🎬 成片视频</div>
+        <div style="margin-bottom:16px;padding:12px;background:linear-gradient(135deg,rgba(99,102,241,0.06),rgba(139,92,246,0.06));border:1px solid rgba(139,92,246,0.15);border-radius:10px;">
+          <video controls style="width:100%;max-width:320px;border-radius:8px;" muted>
+            <source src="${task.final_video_url}" type="video/mp4">
+          </video>
+          <div style="margin-top:8px;display:flex;gap:8px;">
+            <a href="${task.final_video_url}" target="_blank" style="font-size:12px;color:var(--accent2);text-decoration:none;font-weight:600;">📥 下载成片</a>
+          </div>
+        </div>` : ''}
       ${task.script ? `<div class="ct-section-label">原始脚本</div>
         <div class="ct-collapsible" onclick="this.classList.toggle('expanded')">${escHtml(task.script)}</div>` : ''}
       ${task.storyboard ? `<div class="ct-section-label">AI 分镜方案</div>
@@ -350,7 +359,10 @@ function ctRenderCard(task) {
         <button class="ct-submit-all" onclick="ctSubmitAll('${task.task_id}')" id="ct-submit-all-${task.task_id}"
           ${segs.every(s => s.status !== 'pending' && s.status !== 'failed') ? 'disabled' : ''}>
           🚀 提交全部待生成片段
-        </button>` : '<div style="font-size:13px;color:var(--text-muted);padding:12px 0;">暂无片段</div>'}
+        </button>
+        ${completed >= 2 && !task.final_video_url ? `<button class="ct-submit-all" style="margin-left:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;" onclick="ctConcat('${task.task_id}',this)">
+          🔗 拼接成片
+        </button>` : ''}` : '<div style="font-size:13px;color:var(--text-muted);padding:12px 0;">暂无片段</div>'}
     </div>
   </div>`;
 }
@@ -512,6 +524,28 @@ function ctStartPolling(taskId, seg) {
 function escHtml(t) {
   if (!t) return '';
   return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function ctConcat(taskId, btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ 拼接中...';
+  try {
+    const resp = await fetch(`/api/content-tasks/${taskId}/concat`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      const task = ctTasks.find(t => t.task_id === taskId);
+      if (task) task.final_video_url = data.final_video_url;
+      ctRender();
+    } else {
+      alert('拼接失败: ' + (data.error || ''));
+      btn.disabled = false;
+      btn.textContent = '🔗 拼接成片';
+    }
+  } catch (e) {
+    alert('拼接失败: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '🔗 拼接成片';
+  }
 }
 
 // Initial load

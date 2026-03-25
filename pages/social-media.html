@@ -14,10 +14,10 @@
 .sm-plat-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(139,92,246,0.08); font-weight: 600; }
 
 /* --- Table card --- */
-.sm-table-wrap { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+.sm-table-wrap { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: auto; max-height: calc(100vh - 320px); }
 .sm-table-wrap table { width: 100%; border-collapse: collapse; }
-.sm-table-wrap thead { background: var(--bg); }
-.sm-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; }
+.sm-table-wrap thead { background: var(--bg); position: sticky; top: 0; z-index: 2; }
+.sm-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; background: var(--bg); }
 .sm-table-wrap th:hover { color: var(--text); }
 .sm-table-wrap th .sort-icon { font-size: 10px; margin-left: 2px; opacity: 0.4; }
 .sm-table-wrap th.sorted .sort-icon { opacity: 1; color: var(--accent2); }
@@ -74,6 +74,20 @@
 .sm-num { font-variant-numeric: tabular-nums; }
 .sm-num-highlight { font-weight: 600; color: var(--text); }
 
+/* --- Chat panel --- */
+.sm-chat-panel { background: var(--surface); border: 1px solid var(--border-light); border-radius: 12px; margin-top: 16px; box-shadow: 0 -2px 8px rgba(0,0,0,0.03); }
+.sm-chat-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; cursor: pointer; user-select: none; }
+.sm-chat-header h3 { font-size: 13px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px; }
+.sm-chat-body { display: none; max-height: 280px; overflow-y: auto; padding: 0 16px 12px; }
+.sm-chat-body.open { display: block; }
+.sm-chat-input-row { display: none; gap: 8px; padding: 0 16px 12px; }
+.sm-chat-input-row.open { display: flex; }
+.sm-chat-input-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface); }
+.sm-chat-input-row input:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
+.sm-chat-msg { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.sm-chat-msg.user { background: rgba(139,92,246,0.08); margin-left: 40px; }
+.sm-chat-msg.ai { background: var(--bg); margin-right: 20px; }
+
 /* --- Responsive --- */
 @media (max-width: 1024px) { .sm-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) { .sm-kpi-grid { grid-template-columns: 1fr; } }
@@ -112,6 +126,19 @@
 
   <!-- Data Table -->
   <div class="sm-table-wrap" id="smTableWrap"></div>
+
+  <!-- AI Chat Panel -->
+  <div class="sm-chat-panel">
+    <div class="sm-chat-header" onclick="smToggleChat()">
+      <h3><span style="font-size:15px;">🧴</span> 小源 · 数据助手</h3>
+      <span id="smChatToggle" style="font-size:11px;color:var(--text-muted);">展开 ▾</span>
+    </div>
+    <div class="sm-chat-body" id="smChatBody"></div>
+    <div class="sm-chat-input-row" id="smChatInputRow">
+      <input type="text" id="smChatInput" placeholder="问小源：数据分析、产品表现、优化建议..." onkeydown="if(event.key==='Enter'&&!event.isComposing)smSendChat()">
+      <button class="sm-btn-primary" style="padding:8px 16px;font-size:12px;white-space:nowrap;" onclick="smSendChat()">发送</button>
+    </div>
+  </div>
 </div>
 
 <!-- Add/Edit Modal -->
@@ -198,19 +225,22 @@
   </div>
 </div>
 
-<!-- CSV Import Modal -->
-<div class="sm-modal-overlay" id="smCsvOverlay" onclick="if(event.target===this)smCloseCsv()">
-  <div class="sm-modal" style="width:440px;">
-    <h2>CSV 导入</h2>
+<!-- CSV Import Modal with AI Chat -->
+<div class="sm-modal-overlay" id="smCsvOverlay" onclick="if(event.target===this&&!smImporting)smCloseCsv()">
+  <div class="sm-modal" style="width:560px;">
+    <h2 style="display:flex;align-items:center;gap:8px;">🤖 AI 智能导入</h2>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
-      上传 CSV 文件批量导入发布数据。<a href="javascript:void(0)" onclick="smDownloadTemplate()" style="color:var(--accent2);">下载模板</a>
+      上传任意平台的 CSV 文件，AI 自动识别格式、映射字段、计算衍生指标
     </p>
-    <div class="sm-form-group">
+    <div class="sm-form-group" id="smCsvUploadArea">
       <input type="file" id="smCsvFile" accept=".csv" class="sm-form-input">
     </div>
+    <!-- AI Chat Window -->
+    <div id="smAiChat" style="display:none;background:var(--bg);border:1px solid var(--border-light);border-radius:10px;padding:16px;max-height:360px;overflow-y:auto;font-size:13px;line-height:1.8;">
+    </div>
     <div class="sm-modal-footer">
-      <button class="sm-btn-ghost" onclick="smCloseCsv()">取消</button>
-      <button class="sm-btn-primary" onclick="smImportCsv()">导入</button>
+      <button class="sm-btn-ghost" id="smCsvCancelBtn" onclick="smCloseCsv()">取消</button>
+      <button class="sm-btn-primary" id="smCsvImportBtn" onclick="smImportCsv()">开始导入</button>
     </div>
   </div>
 </div>
@@ -298,7 +328,9 @@ function smGetSortValue(record, key) {
   if (key === 'published_at') return record.published_at || '';
   if (key.startsWith('metrics.')) {
     const mk = key.replace('metrics.', '');
-    return record.metrics?.[mk] || 0;
+    const v = record.metrics?.[mk];
+    if (mk === 'duration' || mk === 'avg_watch') return parseFloat(v) || 0;
+    return v || 0;
   }
   return 0;
 }
@@ -331,14 +363,19 @@ function smRender() {
   const cols = [
     { key: null, label: '内容', width: '' },
     { key: null, label: '平台', width: '80px' },
-    { key: 'published_at', label: '发布日期', width: '100px' },
-    { key: 'metrics.views', label: '播放量', width: '90px' },
-    { key: 'metrics.likes', label: '点赞', width: '70px' },
-    { key: 'metrics.comments', label: '评论', width: '70px' },
-    { key: 'metrics.shares', label: '转发', width: '70px' },
-    { key: 'metrics.favorites', label: '收藏', width: '70px' },
-    { key: 'metrics.completion_rate', label: '完播率', width: '90px' },
-    { key: null, label: '操作', width: '120px' },
+    { key: 'published_at', label: '发布日期', width: '90px' },
+    { key: 'metrics.views', label: '播放量', width: '80px' },
+    { key: 'metrics.likes', label: '点赞', width: '60px' },
+    { key: 'metrics.comments', label: '评论', width: '60px' },
+    { key: 'metrics.shares', label: '转发', width: '60px' },
+    { key: 'metrics.favorites', label: '收藏', width: '60px' },
+    { key: 'metrics.follows', label: '关注', width: '55px' },
+    { key: 'metrics.completion_rate', label: '完播率', width: '85px' },
+    { key: 'metrics.duration', label: '时长', width: '50px' },
+    { key: 'metrics.gmv', label: '成交额', width: '75px' },
+    { key: 'metrics.orders', label: '订单', width: '55px' },
+    { key: 'metrics.gpm', label: 'GPM', width: '65px' },
+    { key: null, label: '操作', width: '100px' },
   ];
 
   let html = '<table><thead><tr>';
@@ -357,16 +394,23 @@ function smRender() {
     const m = r.metrics || {};
     const compPct = ((m.completion_rate || 0) * 100).toFixed(0);
     const compColor = m.completion_rate >= 0.5 ? '#22c55e' : m.completion_rate >= 0.3 ? '#f59e0b' : '#ef4444';
+    const playUrl = r.published_url || '';
+    const isQc = r.extra?.['作品ID'];
+    const thumbContent = r.video_url
+      ? `<div class="sm-thumb"><video src="${smEsc(r.video_url)}" muted preload="metadata"></video></div>`
+      : '<div class="sm-thumb" style="display:flex;align-items:center;justify-content:center;font-size:16px;">🎬</div>';
+    const titleText = smEsc(r.title || '未命名');
+    const linkWrap = (inner) => playUrl ? `<a href="${smEsc(playUrl)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">${inner}</a>` : inner;
+    const subtag = isQc
+      ? (r.account_name ? `<span class="sm-tag brand">${smEsc(r.account_name)}</span>` : '')
+      : `${r.brand ? `<span class="sm-tag brand">${smEsc(r.brand)}</span>` : ''}${r.sku ? `<span class="sm-tag">${smEsc(r.sku)}</span>` : ''}`;
 
     html += `<tr>
       <td><div class="sm-content-cell">
-        ${r.video_url ? `<div class="sm-thumb"><video src="${smEsc(r.video_url)}" muted preload="metadata"></video></div>` : '<div class="sm-thumb" style="display:flex;align-items:center;justify-content:center;font-size:16px;">🎬</div>'}
+        ${linkWrap(thumbContent)}
         <div class="sm-content-info">
-          <div class="sm-content-title" title="${smEsc(r.title)}">${smEsc(r.title || '未命名')}</div>
-          <div class="sm-content-tags">
-            ${r.brand ? `<span class="sm-tag brand">${smEsc(r.brand)}</span>` : ''}
-            ${r.sku ? `<span class="sm-tag">${smEsc(r.sku)}</span>` : ''}
-          </div>
+          <div class="sm-content-title" title="${smEsc(r.title)}">${linkWrap(titleText)}</div>
+          <div class="sm-content-tags">${subtag}</div>
         </div>
       </div></td>
       <td><div class="sm-plat-badge">
@@ -379,10 +423,15 @@ function smRender() {
       <td class="sm-num">${smFmt(m.comments || 0)}</td>
       <td class="sm-num">${smFmt(m.shares || 0)}</td>
       <td class="sm-num">${smFmt(m.favorites || 0)}</td>
+      <td class="sm-num">${smFmt(m.follows || 0)}</td>
       <td><div class="sm-comp-wrap">
         <div class="sm-comp-bar"><div class="sm-comp-fill" style="width:${compPct}%;background:${compColor}"></div></div>
         <span class="sm-comp-text" style="color:${compColor}">${compPct}%</span>
       </div></td>
+      <td class="sm-num">${m.duration ? m.duration + 's' : '-'}</td>
+      <td class="sm-num">${(m.gmv || 0) > 0 ? '¥' + smFmt(m.gmv) : '-'}</td>
+      <td class="sm-num">${(m.orders || 0) > 0 ? m.orders : '-'}</td>
+      <td class="sm-num">${(m.gpm || 0) > 0 ? '¥' + smFmt(m.gpm) : '-'}</td>
       <td><div class="sm-actions">
         <button class="sm-act-btn" onclick="smEdit('${r.publish_id}')">编辑</button>
         ${r.task_id ? `<button class="sm-act-btn" onclick="location.hash='#contents'">原内容</button>` : ''}
@@ -498,8 +547,17 @@ async function smDelete(publishId) {
 }
 
 // --- CSV ---
-function smShowCsvImport() { document.getElementById('smCsvOverlay').classList.add('show'); }
-function smCloseCsv() { document.getElementById('smCsvOverlay').classList.remove('show'); }
+function smShowCsvImport() {
+  document.getElementById('smCsvOverlay').classList.add('show');
+  document.getElementById('smAiChat').style.display = 'none';
+  document.getElementById('smAiChat').innerHTML = '';
+  document.getElementById('smCsvUploadArea').style.display = '';
+  document.getElementById('smCsvImportBtn').disabled = false;
+  document.getElementById('smCsvImportBtn').textContent = '开始导入';
+  document.getElementById('smCsvImportBtn').onclick = smImportCsv;
+  document.getElementById('smCsvCancelBtn').style.display = '';
+}
+function smCloseCsv() { if (!smImporting) document.getElementById('smCsvOverlay').classList.remove('show'); }
 
 function smDownloadTemplate() {
   const csv = 'task_id,platform,account_name,published_url,published_at,views,likes,comments,shares,favorites,completion_rate,notes\ne278f0e7,douyin,人源活力官方号,https://example.com,2026-03-24,10000,500,100,50,200,0.42,示例数据';
@@ -510,22 +568,98 @@ function smDownloadTemplate() {
   a.click();
 }
 
+var smImporting = false;
+
+function smAppendChat(html, cls) {
+  const chat = document.getElementById('smAiChat');
+  const div = document.createElement('div');
+  div.style.marginBottom = '6px';
+  if (cls) div.className = cls;
+  div.innerHTML = html;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
 async function smImportCsv() {
   const fileInput = document.getElementById('smCsvFile');
   if (!fileInput.files.length) { alert('请选择 CSV 文件'); return; }
+
+  smImporting = true;
+  const chat = document.getElementById('smAiChat');
+  chat.style.display = 'block';
+  chat.innerHTML = '';
+  document.getElementById('smCsvImportBtn').disabled = true;
+  document.getElementById('smCsvImportBtn').textContent = '处理中...';
+  document.getElementById('smCsvUploadArea').style.display = 'none';
+
+  smAppendChat('📤 <strong>开始上传文件...</strong>');
+
   const fd = new FormData();
   fd.append('file', fileInput.files[0]);
+
   try {
-    const resp = await fetch('/api/social-publish/import-csv', { method: 'POST', body: fd });
-    const result = await resp.json();
-    if (result.success) {
-      alert(`成功导入 ${result.imported_count} 条记录`);
-      smCloseCsv();
-      await smLoad();
-    } else {
-      alert('导入失败: ' + JSON.stringify(result));
+    const resp = await fetch('/api/import/smart-csv?target=social', { method: 'POST', body: fd });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let summaryText = '';
+    let summaryEl = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+        try {
+          const obj = JSON.parse(data);
+          if (obj.event === 'progress') {
+            smAppendChat(obj.text);
+          } else if (obj.event === 'mapping') {
+            smAppendChat(`🎯 <strong>平台: ${obj.platform}</strong> | 映射 ${obj.mapped} 字段 | ${obj.unmapped_count} 个未映射`, '');
+          } else if (obj.event === 'result') {
+            const s = obj.stats || {};
+            let statsHtml = `<div style="margin:8px 0;padding:10px 14px;background:var(--surface);border:1px solid var(--border-light);border-radius:8px;">`;
+            statsHtml += `<div style="font-weight:700;margin-bottom:6px;">📊 入库统计</div>`;
+            statsHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;">`;
+            statsHtml += `<span>导入记录: <strong>${obj.imported_count}</strong></span>`;
+            statsHtml += `<span>衍生指标: <strong>${obj.derived_count}</strong> 条</span>`;
+            if (s.total_views) statsHtml += `<span>总播放: <strong>${(s.total_views/10000).toFixed(1)}万</strong></span>`;
+            if (s.total_interact) statsHtml += `<span>总互动: <strong>${(s.total_interact/10000).toFixed(1)}万</strong></span>`;
+            if (s.total_gmv) statsHtml += `<span>引流GMV: <strong>¥${s.total_gmv.toFixed(0)}</strong></span>`;
+            if (s.total_spend) statsHtml += `<span>总消耗: <strong>¥${s.total_spend.toFixed(0)}</strong></span>`;
+            statsHtml += `</div></div>`;
+            smAppendChat(statsHtml);
+          } else if (obj.event === 'summary') {
+            if (!summaryEl) {
+              smAppendChat('<div style="margin-top:8px;padding:12px 14px;background:linear-gradient(135deg,rgba(99,102,241,0.06),rgba(139,92,246,0.06));border:1px solid rgba(139,92,246,0.15);border-radius:8px;"><div style="font-weight:700;margin-bottom:6px;">🧠 AI 分析</div><div id="smSummaryContent" style="font-size:12.5px;line-height:1.7;"></div></div>');
+              summaryEl = document.getElementById('smSummaryContent');
+            }
+            summaryText += obj.text;
+            summaryEl.innerHTML = summaryText
+              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\n/g, '<br>');
+            chat.scrollTop = chat.scrollHeight;
+          } else if (obj.event === 'error') {
+            smAppendChat(`❌ <span style="color:#dc2626;">${obj.message}</span>`);
+          }
+        } catch {}
+      }
     }
-  } catch (e) { alert('导入失败: ' + e.message); }
+  } catch (e) {
+    smAppendChat(`❌ <span style="color:#dc2626;">请求失败: ${e.message}</span>`);
+  }
+
+  smImporting = false;
+  const btn = document.getElementById('smCsvImportBtn');
+  btn.disabled = false;
+  btn.textContent = '完成';
+  btn.onclick = async () => { smCloseCsv(); await smLoad(); };
+  document.getElementById('smCsvCancelBtn').style.display = 'none';
 }
 
 function smEsc(t) {
@@ -534,5 +668,79 @@ function smEsc(t) {
 }
 
 // Init
+// --- AI Chat Panel ---
+var smChatMessages = [];
+var smChatOpen = false;
+var smChatStreaming = false;
+
+function smToggleChat() {
+  smChatOpen = !smChatOpen;
+  document.getElementById('smChatBody').classList.toggle('open', smChatOpen);
+  document.getElementById('smChatInputRow').classList.toggle('open', smChatOpen);
+  document.getElementById('smChatToggle').textContent = smChatOpen ? '收起 ▴' : '展开 ▾';
+  if (smChatOpen) document.getElementById('smChatInput').focus();
+}
+
+function smRenderChat() {
+  const body = document.getElementById('smChatBody');
+  body.innerHTML = smChatMessages.map(m => {
+    let html = smEsc(m.content).replace(/\n/g, '<br>').replace(/&lt;!--ACTION:.*?--&gt;/g, '');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    return `<div class="sm-chat-msg ${m.role === 'user' ? 'user' : 'ai'}">${html || '<span style="color:var(--text-muted);">思考中...</span>'}</div>`;
+  }).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
+async function smSendChat() {
+  if (smChatStreaming) return;
+  const input = document.getElementById('smChatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  smChatMessages.push({ role: 'user', content: text });
+  smChatMessages.push({ role: 'assistant', content: '' });
+  smRenderChat();
+  smChatStreaming = true;
+
+  try {
+    const resp = await fetch('/api/data-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: smChatMessages.filter(m => m.content), page: 'social' })
+    });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+        try {
+          const obj = JSON.parse(data);
+          if (obj.text) {
+            smChatMessages[smChatMessages.length - 1].content += obj.text;
+            smRenderChat();
+          }
+          if (obj.actions_executed) {
+            await smLoad();
+          }
+        } catch {}
+      }
+    }
+  } catch (e) {
+    smChatMessages[smChatMessages.length - 1].content += '\n⚠️ 请求失败: ' + e.message;
+    smRenderChat();
+  }
+  smChatStreaming = false;
+}
+
 smLoad();
 </script>

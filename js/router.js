@@ -62,21 +62,21 @@
     render(pageId);
   };
 
+  function show(el, visible) { if (el) el.style.display = visible ? '' : 'none'; }
+
   async function render(pageId) {
     syncSidebar(pageId);
 
     if (pageId === 'creation') {
-      // Show inline creation UI
-      creationEl().style.display = '';
-      topbarEl().style.display = '';
-      contentEl().style.display = 'none';
-      breadEl().style.display = 'none';
+      show(creationEl(), true);
+      show(topbarEl(), true);
+      show(contentEl(), false);
+      show(breadEl(), false);
     } else {
-      // Show SPA page
-      creationEl().style.display = 'none';
-      topbarEl().style.display = 'none';
-      contentEl().style.display = '';
-      breadEl().style.display = '';
+      show(creationEl(), false);
+      show(topbarEl(), false);
+      show(contentEl(), true);
+      show(breadEl(), true);
       syncBreadcrumb(pageId);
       try {
         const html = await loadPage(pageId);

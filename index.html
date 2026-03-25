@@ -56,7 +56,7 @@
       </div>
       <div class="nav-item" data-page="user-mgmt" onclick="navigateTo('user-mgmt')">
         <span class="nav-icon">🧠</span>
-        <span>内容智能</span>
+        <span>内容智能中枢</span>
       </div>
     </div>
   </nav>
@@ -87,6 +87,111 @@
     <!-- Pages loaded here by router.js -->
   </div>
 </main>
+
+<!-- ========== 小源 · 悬浮聊天 ========== -->
+<button id="chat-fab" onclick="toggleXyChat()" style="
+  position:fixed;bottom:32px;right:32px;width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:24px;
+  border:none;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+  transition:transform 0.2s;
+" onmouseenter="this.style.transform='scale(1.1)'" onmouseleave="this.style.transform='scale(1)'">🧴</button>
+
+<div id="chat-panel" style="
+  position:fixed;bottom:104px;right:32px;width:380px;height:520px;
+  background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);
+  border-radius:20px;box-shadow:0 8px 40px rgba(0,0,0,0.15);
+  display:none;flex-direction:column;z-index:9998;overflow:hidden;
+  border:1px solid rgba(0,0,0,0.06);
+">
+  <div style="padding:16px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-weight:600;font-size:15px;">🧴 小源 · 人源活力专属AI</div>
+      <div style="font-size:12px;opacity:0.85;margin-top:2px;">产品顾问 · 数据分析 · 内容策略</div>
+    </div>
+    <div id="xy-status" style="font-size:11px;padding:3px 8px;border-radius:10px;background:rgba(255,255,255,0.2);">检测中</div>
+  </div>
+  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
+    <div class="xy-msg-bot">你好！我是小源，人源活力专属AI助手 🧴 有什么可以帮您的？</div>
+  </div>
+  <div style="padding:12px 16px;border-top:1px solid #f0f0f0;display:flex;gap:8px;">
+    <input id="chat-input" type="text" placeholder="问我关于产品、数据、内容策略..." style="
+      flex:1;padding:10px 14px;border:1px solid #e0e0e0;border-radius:20px;font-size:14px;outline:none;
+      transition:border-color 0.2s;
+    " onfocus="this.style.borderColor='#8b5cf6'" onblur="this.style.borderColor='#e0e0e0'" onkeydown="if(event.key==='Enter'&&!event.isComposing)xySendChat()"/>
+    <button onclick="xySendChat()" style="
+      padding:10px 16px;background:#6366f1;color:#fff;border:none;border-radius:20px;cursor:pointer;font-size:14px;
+      transition:background 0.2s;
+    " onmouseenter="this.style.background='#4f46e5'" onmouseleave="this.style.background='#6366f1'">发送</button>
+  </div>
+</div>
+
+<style>
+.xy-msg-bot{background:#f3f4f6;color:#111;padding:10px 14px;border-radius:14px 14px 14px 4px;font-size:14px;max-width:85%;line-height:1.6;white-space:pre-wrap;}
+.xy-msg-user{background:#6366f1;color:#fff;padding:10px 14px;border-radius:14px 14px 4px 14px;font-size:14px;max-width:85%;align-self:flex-end;line-height:1.6;}
+.xy-msg-bot a{color:#6366f1;text-decoration:underline;}
+</style>
+
+<script>
+const XY_SESSION = 'web-' + Math.random().toString(36).slice(2, 10);
+
+function toggleXyChat() {
+  const p = document.getElementById('chat-panel');
+  const show = p.style.display === 'none';
+  p.style.display = show ? 'flex' : 'none';
+  if (show) document.getElementById('chat-input').focus();
+}
+
+async function xySendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  xyAppendMsg(msg, 'user');
+  input.value = '';
+  const loading = xyAppendMsg('思考中...', 'bot');
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: msg, session_id: XY_SESSION }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      loading.textContent = data.reply || '（无回复）';
+    } else {
+      loading.textContent = data.error || '请求失败，请稍后重试';
+      loading.style.color = '#ef4444';
+    }
+  } catch (e) {
+    loading.textContent = '网络错误，请检查服务器连接';
+    loading.style.color = '#ef4444';
+  }
+}
+
+function xyAppendMsg(text, role) {
+  const box = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = role === 'user' ? 'xy-msg-user' : 'xy-msg-bot';
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+// Check OpenClaw Gateway status on load
+(async () => {
+  const st = document.getElementById('xy-status');
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: 'ping', session_id: 'health-check' }),
+    });
+    if (r.ok) { st.textContent = '在线'; st.style.background = 'rgba(34,197,94,0.3)'; }
+    else { st.textContent = '离线'; st.style.background = 'rgba(239,68,68,0.3)'; }
+  } catch { st.textContent = '离线'; st.style.background = 'rgba(239,68,68,0.3)'; }
+})();
+</script>
 
 <script src="/js/router.js"></script>
 </body>

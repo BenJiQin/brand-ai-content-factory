@@ -45,94 +45,42 @@
   </div>
 
   <!-- 顶部统计栏 -->
-  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;">
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
     <div class="card" style="padding: 16px;">
-      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">📦 总素材数</div>
-      <div style="font-size: 24px; font-weight: 700;">342</div>
-    </div>
-    <div class="card" style="padding: 16px;">
-      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">🎬 视频</div>
-      <div style="font-size: 24px; font-weight: 700;">142</div>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">📦 产品线</div>
+      <div style="font-size: 24px; font-weight: 700;">8</div>
     </div>
     <div class="card" style="padding: 16px;">
-      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">🖼️ 图片</div>
-      <div style="font-size: 24px; font-weight: 700;">200</div>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">🖼️ CDN图片</div>
+      <div style="font-size: 24px; font-weight: 700;">29</div>
     </div>
     <div class="card" style="padding: 16px;">
-      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">📊 文档</div>
-      <div style="font-size: 24px; font-weight: 700;">28</div>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">🧴 人源活力</div>
+      <div style="font-size: 24px; font-weight: 700;">29</div>
     </div>
     <div class="card" style="padding: 16px;">
-      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">💾 存储用量</div>
-      <div style="font-size: 24px; font-weight: 700;">2.3GB <span style="font-size: 14px; color: var(--text-muted);">/ 10GB</span></div>
-    </div>
-  </div>
-
-  <!-- 存储用量进度条 -->
-  <div class="card" style="padding: 16px; margin-bottom: 24px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-      <div style="font-size: 13px; font-weight: 600;">云空间使用情况</div>
-      <div style="font-size: 13px; color: var(--text-secondary);">已用 23% · 剩余 7.7GB</div>
-    </div>
-    <div style="width: 100%; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden;">
-      <div style="width: 23%; height: 100%; background: linear-gradient(90deg, #6366f1, #a78bfa); border-radius: 4px;"></div>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">🆕 今日更新</div>
+      <div style="font-size: 24px; font-weight: 700;">11</div>
     </div>
   </div>
 
   <div class="filter-bar">
     <input type="text" class="form-input" placeholder="🔍 搜索素材..." style="width: 300px;">
     <div class="tab-group">
-      <button class="tab-btn active">产品素材</button>
-      <button class="tab-btn">其他素材</button>
-    </div>
-    <div class="tab-group">
       <button class="tab-btn active">全部</button>
-      <button class="tab-btn">视频</button>
       <button class="tab-btn">图片</button>
     </div>
-    <select class="form-select" style="width: auto;">
-      <option>全部品牌</option>
-      <option>人源活力</option>
-      <option>蚂蚁阿福</option>
-      <option>蓝色光标</option>
-    </select>
     <select class="form-select" style="width: auto;">
       <option>排序：最近更新</option>
       <option>排序：文件数量</option>
       <option>排序：名称</option>
     </select>
     <div style="flex: 1;"></div>
-    <button class="btn-add" onclick="alert('新建分组')">+ 新建分组</button>
-    <button class="btn-add" onclick="alert('批量上传')">📤 批量上传</button>
   </div>
 
-  <!-- 操作按钮增强区 -->
+  <!-- 操作按钮 -->
   <div style="display: flex; gap: 8px; margin-bottom: 24px;">
-    <button class="quick-btn" onclick="alert('图片转视频功能')">🎞️ 图片转视频</button>
-    <button class="quick-btn" onclick="alert('智能拆解功能')">✂️ 智能拆解</button>
-    <button class="quick-btn" onclick="alert('AI自动标签功能')">🏷️ AI自动标签</button>
-    <button class="quick-btn" onclick="alert('批量编辑')">✏️ 批量编辑</button>
-  </div>
-
-  <!-- AI智能标签区域 -->
-  <div class="card" style="padding: 16px; margin-bottom: 24px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-      <div style="font-size: 13px; font-weight: 600;">🤖 AI智能标签云</div>
-      <button class="quick-btn" onclick="alert('查看全部标签')">查看全部</button>
-    </div>
-    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-      <span style="padding: 4px 12px; background: #e0e7ff; color: #4338ca; border-radius: 20px; font-size: 12px; cursor: pointer;">#智能驾驶 (52)</span>
-      <span style="padding: 4px 12px; background: #fce7f3; color: #be185d; border-radius: 20px; font-size: 12px; cursor: pointer;">#XNGP (45)</span>
-      <span style="padding: 4px 12px; background: #dcfce7; color: #15803d; border-radius: 20px; font-size: 12px; cursor: pointer;">#5C超快充 (38)</span>
-      <span style="padding: 4px 12px; background: #fef3c7; color: #b45309; border-radius: 20px; font-size: 12px; cursor: pointer;">#续航 (67)</span>
-      <span style="padding: 4px 12px; background: #dbeafe; color: #075985; border-radius: 20px; font-size: 12px; cursor: pointer;">#智能座舱 (34)</span>
-      <span style="padding: 4px 12px; background: #f3e8ff; color: #6b21a8; border-radius: 20px; font-size: 12px; cursor: pointer;">#品牌 (29)</span>
-      <span style="padding: 4px 12px; background: #fff7ed; color: #c2410c; border-radius: 20px; font-size: 12px; cursor: pointer;">#AI科技 (31)</span>
-      <span style="padding: 4px 12px; background: #fef2f2; color: #b91c1c; border-radius: 20px; font-size: 12px; cursor: pointer;">#新能源 (28)</span>
-      <span style="padding: 4px 12px; background: #f3e8ff; color: #7c3aed; border-radius: 20px; font-size: 12px; cursor: pointer;">#人源活力 (16)</span>
-      <span style="padding: 4px 12px; background: #fce7f3; color: #be185d; border-radius: 20px; font-size: 12px; cursor: pointer;">#护肤精华 (9)</span>
-      <span style="padding: 4px 12px; background: #fff7ed; color: #9a3412; border-radius: 20px; font-size: 12px; cursor: pointer;">#冻干面膜 (4)</span>
-    </div>
+    <button class="quick-btn" onclick="alert('批量上传功能开发中')">📤 批量上传</button>
   </div>
 
   <div class="asset-grid">
@@ -212,46 +160,51 @@
       </div>
     </div>
 
-    <!-- 蚂蚁阿福素材 -->
-    <div class="asset-card" onclick="openAssetDetail('春节营销素材包', 35, '蚂蚁阿福', '营销素材', '2天前')">
-      <div class="asset-thumb" style="background: url('assets/mayi_afu/brand_overview.jpg'); background-size: cover; background-position: center;">
-        <div class="asset-count">35 个文件</div>
+    <div class="asset-card" onclick="openAssetDetail('胶原丰唇小金条')">
+      <div class="asset-thumb" style="background: url('https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612189354042851333/5e63844c-5992-4aeb-809e-da0b8b878802.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #faf5ff;">
+        <div class="asset-count">4 个文件</div>
+        <div style="position: absolute; top: 8px; left: 8px; padding: 3px 8px; background: rgba(139,92,246,0.9); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>
       </div>
       <div class="asset-info">
-        <div class="asset-name">春节营销素材包</div>
+        <div class="asset-name">💋 胶原丰唇小金条</div>
         <div class="asset-meta">
-          <span style="display: inline-block; padding: 2px 8px; background: #dbeafe; color: #075985; border-radius: 4px; font-size: 10px; margin-right: 6px;">蚂蚁阿福</span>
-          营销素材 • 视频+图片
+          <span style="display: inline-block; padding: 2px 8px; background: #f3e8ff; color: #6b21a8; border-radius: 4px; font-size: 10px; margin-right: 6px;">人源活力</span>
+          <span style="display: inline-block; padding: 2px 8px; background: #fce7f3; color: #be185d; border-radius: 4px; font-size: 10px;">唇部精华</span>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">· CDN已上传 · 4张</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">📅 更新于 2天前</div>
       </div>
     </div>
-    <div class="asset-card" onclick="openAssetDetail('品牌VI & Logo', 15, '蚂蚁阿福', '品牌素材', '5天前')">
-      <div class="asset-thumb" style="background: url('assets/mayi_afu/afu_logo.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #f3f4f6;">
-        <div class="asset-count">15 个文件</div>
+
+    <div class="asset-card" onclick="openAssetDetail('紧塑童颜水光精华液（精雕瓶）')">
+      <div class="asset-thumb" style="background: url('https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193348882530309/jingdiao_white_外盒.jpg'); background-size: cover; background-position: center;">
+        <div class="asset-count">4 个文件</div>
+        <div style="position: absolute; top: 8px; left: 8px; padding: 3px 8px; background: rgba(139,92,246,0.9); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>
       </div>
       <div class="asset-info">
-        <div class="asset-name">品牌VI & Logo</div>
+        <div class="asset-name">🧴 精雕瓶</div>
         <div class="asset-meta">
-          <span style="display: inline-block; padding: 2px 8px; background: #dbeafe; color: #075985; border-radius: 4px; font-size: 10px; margin-right: 6px;">蚂蚁阿福</span>
-          品牌素材 • 图片
+          <span style="display: inline-block; padding: 2px 8px; background: #f3e8ff; color: #6b21a8; border-radius: 4px; font-size: 10px; margin-right: 6px;">人源活力</span>
+          <span style="display: inline-block; padding: 2px 8px; background: #fce7f3; color: #be185d; border-radius: 4px; font-size: 10px;">精雕瓶</span>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">· CDN已上传 · 4张</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">📅 更新于 5天前</div>
       </div>
     </div>
-    <div class="asset-card" onclick="openAssetDetail('KOL合作素材', 42, '蚂蚁阿福', '营销素材', '1周前')">
-      <div class="asset-thumb" style="background: url('assets/mayi_afu/aiww_features.jpg'); background-size: cover; background-position: center;">
-        <div class="asset-count">42 个文件</div>
+
+    <div class="asset-card" onclick="openAssetDetail('微晶盖章头')">
+      <div class="asset-thumb" style="background: url('https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193455753396229/gaizhangtou_white_1.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: #faf5ff;">
+        <div class="asset-count">3 个文件</div>
+        <div style="position: absolute; top: 8px; left: 8px; padding: 3px 8px; background: rgba(139,92,246,0.9); color: #fff; border-radius: 4px; font-size: 10px; font-weight: 600;">☁️ CDN</div>
       </div>
       <div class="asset-info">
-        <div class="asset-name">KOL合作素材</div>
+        <div class="asset-name">💎 微晶盖章头</div>
         <div class="asset-meta">
-          <span style="display: inline-block; padding: 2px 8px; background: #dbeafe; color: #075985; border-radius: 4px; font-size: 10px; margin-right: 6px;">蚂蚁阿福</span>
-          营销素材 • 视频+图片
+          <span style="display: inline-block; padding: 2px 8px; background: #f3e8ff; color: #6b21a8; border-radius: 4px; font-size: 10px; margin-right: 6px;">人源活力</span>
+          <span style="display: inline-block; padding: 2px 8px; background: #fce7f3; color: #be185d; border-radius: 4px; font-size: 10px;">盖章头</span>
+          <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">· CDN已上传 · 3张</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">📅 更新于 1周前</div>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -319,6 +272,32 @@ var RHC_ASSETS = {
     files: [
       { name: '冻干球-套装白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611155632002695173/白底.jpg' },
       { name: '冻干球-单瓶产品图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-611474678447341573/单瓶.png' }
+    ]
+  },
+  '胶原丰唇小金条': {
+    brand: '人源活力', series: '唇部精华',
+    files: [
+      { name: '唇部精华-白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612189354042851333/5e63844c-5992-4aeb-809e-da0b8b878802.png' },
+      { name: '唇部精华-模特展示', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-612196986484948997/lip_model_frame.jpg' },
+      { name: '唇部精华-产品细节', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-612197016885264389/lip_f1.jpg' },
+      { name: '唇部精华-使用演示', url: 'https://bmc-media-storage.tos-s3-cn-beijing.volces.com/blueai_media_storage/1746837956497416/task-612197052687843333/lip_f2.jpg' }
+    ]
+  },
+  '紧塑童颜水光精华液（精雕瓶）': {
+    brand: '人源活力', series: '精雕瓶',
+    files: [
+      { name: '精雕瓶-外盒白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193348882530309/jingdiao_white_外盒.jpg' },
+      { name: '精雕瓶-冻干球白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193363965247493/jingdiao_white_冻干球.png' },
+      { name: '精雕瓶-精华液白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193387755339781/jingdiao_white_精华液.jpg' },
+      { name: '精雕瓶-小样外盒白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193421292994575/jingdiao_white_小样外盒.jpg' }
+    ]
+  },
+  '微晶盖章头': {
+    brand: '人源活力', series: '盖章头',
+    files: [
+      { name: '盖章头-白底图1', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193455753396229/gaizhangtou_white_1.png' },
+      { name: '盖章头-白底图2', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193481338650629/gaizhangtou_white_2.jpg' },
+      { name: '盖章头+精雕瓶组合白底图', url: 'https://vlc-bmc-media-storage-global.bluemediacdn.com/blueai_media_storage/1746837956497416/task-612193505464287247/gaizhangtou_white_combo.jpg' }
     ]
   }
 };

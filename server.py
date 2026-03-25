@@ -37,6 +37,10 @@ CLAUDE_API_BASE = os.environ.get("CLAUDE_API_BASE", "https://bmc-llm-relay.bluem
 CLAUDE_API_KEY = os.environ.get("OPENAI_API_KEY", "sk-bO01ixWMbGEzblzbvyjVXPKeDJgV1oA4uLbnuzmRnO3c6ogl")
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "Doubao-Seed-2.0-pro")
 
+# --- OpenClaw Gateway (真·小源 Agent) ---
+OPENCLAW_GATEWAY = os.environ.get("OPENCLAW_GATEWAY", "http://localhost:9999")
+OPENCLAW_AGENT = os.environ.get("OPENCLAW_AGENT", "xiaoyuan")
+
 BRAND_SYSTEM_PROMPTS = {
     "video_script": """你是一位专业的品牌视频脚本创作师，擅长短视频内容创作（抖音/小红书/B站）。
 请根据用户需求和品牌信息，创作专业的视频分镜脚本。
@@ -100,7 +104,9 @@ BRAND_SYSTEM_PROMPTS = {
 - 片段数量要精简，能少则少
 - 提示词必须中文，详细具体
 - 确保片段间有连贯性
-- 总时长应覆盖完整脚本""",
+- 总时长应覆盖完整脚本
+- 中文口播约4字/秒，15秒≈60字。如果脚本超过60字，必须拆分为多个片段
+- 用户提示中的[建议分段数]是参考，你应该据此拆分""",
 }
 
 MODEL_MAP = {
@@ -594,77 +600,50 @@ async def generate_copy(
     sku: str = Form(""),
     mode: str = Form("video_script"),
 ):
-    """Stream copy generation from Claude API."""
-    # Build system prompt
-    system = "你是专业的品牌内容策划师，为蓝色光标客户创作高质量的社媒内容。\n\n"
-    if brand == "人源活力":
-        system += f"品牌：人源活力（RHC）\n产品：{sku}\n"
-        sku_descs = {
-            "光子瓶": "光感焕肤精华（光子瓶）RHC Skin Renewal Protease Essence，磨砂玻璃滴管瓶，紫蓝→粉紫→乳白渐变外观，核心成分是皮肤修复蛋白酶，主打提亮肤色、细腻毛孔、修护敏感肌。",
-            "冻干面膜": "焕活修护冻干面膜，冻干技术锁鲜活性成分，敷前加精华液激活，深层修护、紧致提亮。",
-            "次抛精华": "鎏金抗衰次抛精华，单支独立密封，高浓度抗衰精华，主打抗皱紧致、淡化细纹。",
-            "眼油": "玫瑰淡纹提拉眼油，精油质地好吸收，淡化眼周细纹、提拉紧致、消除浮肿。",
-            "冻干球": "寡肽修护冻干球，球状冻干剂型，溶解后释放高浓度寡肽，深层修护受损肌肤。",
-        }
-        for k, v in sku_descs.items():
-            if k in sku:
-                system += f"产品描述：{v}\n"
-                break
-        system += "目标受众：25-35岁女性，高端护肤消费群体。\n"
-    elif brand and sku:
-        brand_info = brand_assets.get(brand, {})
-        sku_info = brand_info.get(sku, {})
-        if sku_info:
-            system += f"品牌：{brand}\n产品：{sku_info.get('name', sku)}\n"
-    system += f"\n创作类型："
-    if mode == "xiaohongshu":
-        system += "小红书种草文案，风格活泼，用emoji，有标题、正文、标签，真实不生硬，避免营销感太重。\n要求：字数200-300字，带话题标签。"
-    elif mode == "short_video":
-        system += "15秒短视频脚本，分镜头，有画面描述+旁白+字幕，节奏快，有记忆点。\n要求：分3-4个镜头，每个镜头配1-2句话。"
+    """Stream copy generation via 小源 (OpenClaw) with brand knowledge + data insights."""
+    # --- 1. Brand knowledge base ---
+    brand_knowledge = _load_brand_knowledge()
+    context = "你是人源活力品牌专属内容策划师，基于品牌知识库和数据洞察，创作高质量的社媒营销内容。\n\n"
+    if brand_knowledge:
+        context += f"## 品牌与产品知识库\n{brand_knowledge}\n\n"
     else:
-        system += "Seedance视频生成提示词，用中文详细描述画面内容、视觉风格、镜头语言，适合AI视频模型生成10-15秒竖屏视频。\n要求：包含景别、光线、运镜、色调、整体风格。"
-    system += "\n\n重要：全部使用中文输出，不要使用英文。"
+        context += f"品牌：人源活力（RHC）\n产品：{sku}\n"
 
-    system += f"\n\n用户需求：{prompt}"
+    # --- 2. Data insights feedback loop ---
+    data_insights = _load_data_insights()
+    if data_insights:
+        context += f"## 数据洞察（请参考以优化内容策略）\n{data_insights}\n\n"
+
+    # --- 3. Mode-specific instructions ---
+    context += "## 创作要求\n"
+    if mode == "xiaohongshu":
+        context += "类型：小红书种草文案。风格活泼真实，用emoji，有标题、正文、标签。字数200-300字，带话题标签。避免营销感太重。\n"
+    elif mode == "short_video":
+        context += "类型：15秒短视频脚本。分3-4个镜头，每个镜头配画面描述+旁白+字幕。前3秒必须有钩子，节奏快，有记忆点。\n"
+    else:
+        context += "类型：Seedance视频生成提示词。用中文详细描述画面内容、视觉风格、镜头语言，适合AI视频模型生成10-15秒竖屏视频。包含景别、光线、运镜、色调、整体风格。\n"
+
+    # --- 4. Image-aware context ---
+    context += "\n## 素材使用指南\n"
+    context += "用户已选择的素材图片及其场景描述会在用户消息中列出。请根据素材的具体内容来设计脚本的画面和叙事。\n"
+    context += "- 白底图 → 适合产品特写、品牌logo露出\n"
+    context += "- 模特展示/使用演示 → 适合真人种草、使用教程\n"
+    context += "- 场景图 → 适合氛围营造、生活方式展示\n"
+    context += "- 包装/开箱 → 适合开箱惊喜、拆快递场景\n"
+    context += "\n重要：全部使用中文输出。"
+
+    full_message = f"[创作上下文]\n{context}\n\n[用户创作需求]\n{prompt}"
 
     async def stream():
         try:
-            async with httpx.AsyncClient(timeout=120) as client:
-                async with client.stream(
-                    "POST",
-                    f"{CLAUDE_API_BASE}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {CLAUDE_API_KEY}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": CLAUDE_MODEL,
-                        "messages": [
-                            {"role": "system", "content": system},
-                            {"role": "user", "content": prompt},
-                        ],
-                        "stream": True,
-                    },
-                ) as response:
-                    response.raise_for_status()
-                    async for line in response.aiter_lines():
-                        line = line.strip()
-                        if not line or not line.startswith("data: "):
-                            continue
-                        data = line[6:].strip()
-                        if data == "[DONE]":
-                            yield "data: [DONE]\n\n"
-                            break
-                        try:
-                            chunk = json.loads(data)
-                            delta = chunk["choices"][0]["delta"].get("content", "")
-                            if delta:
-                                yield f"data: {json.dumps({'text': delta}, ensure_ascii=False)}\n\n"
-                        except json.JSONDecodeError:
-                            pass
+            reply = await _call_xiaoyuan(full_message, session_key="copy-gen")
+            if reply:
+                yield f"data: {json.dumps({'text': reply}, ensure_ascii=False)}\n\n"
+        except httpx.ConnectError:
+            yield f"data: {json.dumps({'text': '⚠️ OpenClaw Gateway 未运行，请确认 openclaw gateway start 已执行'}, ensure_ascii=False)}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
-            yield "data: [DONE]\n\n"
+        yield "data: [DONE]\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 
@@ -676,79 +655,68 @@ async def generate_storyboard(
     brand: str = Form(""),
     sku: str = Form(""),
     asset_urls: str = Form("[]"),
+    asset_descriptions: str = Form("[]"),
     aspect_ratio: str = Form("9:16"),
     visual_style: str = Form(""),
 ):
-    """Stream storyboard generation from LLM via SSE."""
+    """Stream storyboard generation via 小源 (OpenClaw), with brand knowledge + image awareness."""
     try:
         urls = json.loads(asset_urls) if isinstance(asset_urls, str) else asset_urls
     except json.JSONDecodeError:
         urls = []
+    try:
+        descs = json.loads(asset_descriptions) if isinstance(asset_descriptions, str) else asset_descriptions
+    except json.JSONDecodeError:
+        descs = []
 
-    system = BRAND_SYSTEM_PROMPTS.get("storyboard", "")
+    context = BRAND_SYSTEM_PROMPTS.get("storyboard", "")
+
+    # --- Brand knowledge injection ---
+    brand_knowledge = _load_brand_knowledge()
+    if brand_knowledge:
+        context += f"\n\n## 品牌与产品知识库\n{brand_knowledge}"
+
+    # --- Data insights feedback ---
+    data_insights = _load_data_insights()
+    if data_insights:
+        context += f"\n\n## 数据洞察（参考以优化内容策略）\n{data_insights}"
 
     if brand:
-        system += f"\n\n品牌：{brand}"
+        context += f"\n\n当前品牌：{brand}"
     if sku:
-        system += f"\n产品：{sku}"
-        sku_descs = {
-            "光子瓶": "光感焕肤精华（光子瓶），磨砂玻璃滴管瓶，紫蓝→粉紫→乳白渐变外观，核心成分是皮肤修复蛋白酶。",
-            "冻干面膜": "焕活修护冻干面膜，冻干技术锁鲜活性成分。",
-            "次抛精华": "鎏金抗衰次抛精华，高浓度抗衰精华。",
-            "眼油": "玫瑰淡纹提拉眼油，淡化眼周细纹、提拉紧致。",
-            "冻干球": "寡肽修护冻干球，深层修护受损肌肤。",
-        }
-        for k, v in sku_descs.items():
-            if k in sku:
-                system += f"\n产品描述：{v}"
-                break
-    if urls:
-        system += f"\n可用素材URL：\n" + "\n".join(urls)
-    if aspect_ratio:
-        system += f"\n默认画面比例：{aspect_ratio}"
-    if visual_style:
-        system += f"\n视觉风格要求：{visual_style}"
+        context += f"\n当前产品：{sku}"
 
-    user_message = f"请为以下脚本生成Seedance视频分镜方案：\n\n{script}"
+    # --- Image-aware asset descriptions ---
+    if descs:
+        context += "\n\n## 可用素材及场景说明（请根据每张图的具体内容来分配镜头）"
+        for d in descs:
+            context += f"\n- [{d.get('sku','')}·{d.get('label','')}] {d.get('scene','')} → URL: {d.get('url','')}"
+        context += "\n\n注意：为每个片段选择最匹配场景的素材。白底图适合产品特写，模特/使用图适合真人演示，场景图适合氛围营造。"
+    elif urls:
+        context += f"\n可用素材URL：\n" + "\n".join(urls)
+
+    if aspect_ratio:
+        context += f"\n默认画面比例：{aspect_ratio}"
+    if visual_style:
+        context += f"\n视觉风格要求：{visual_style}"
+
+    # Calculate script length and suggest segment count
+    char_count = len(script.strip())
+    suggested_segments = max(1, (char_count + 59) // 60)  # ~60字/15秒 at 4字/秒
+    seg_hint = f"[口播脚本约{char_count}字，按4字/秒语速约{char_count/4:.0f}秒，建议拆分为{suggested_segments}个15秒片段]"
+
+    full_message = f"[分镜创作上下文]\n{context}\n\n{seg_hint}\n\n请为以下脚本生成Seedance视频分镜方案：\n\n{script}"
 
     async def stream():
         try:
-            async with httpx.AsyncClient(timeout=120) as client:
-                async with client.stream(
-                    "POST",
-                    f"{CLAUDE_API_BASE}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {CLAUDE_API_KEY}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": CLAUDE_MODEL,
-                        "messages": [
-                            {"role": "system", "content": system},
-                            {"role": "user", "content": user_message},
-                        ],
-                        "stream": True,
-                    },
-                ) as response:
-                    response.raise_for_status()
-                    async for line in response.aiter_lines():
-                        line = line.strip()
-                        if not line or not line.startswith("data: "):
-                            continue
-                        data = line[6:].strip()
-                        if data == "[DONE]":
-                            yield "data: [DONE]\n\n"
-                            break
-                        try:
-                            chunk = json.loads(data)
-                            delta = chunk["choices"][0]["delta"].get("content", "")
-                            if delta:
-                                yield f"data: {json.dumps({'text': delta}, ensure_ascii=False)}\n\n"
-                        except json.JSONDecodeError:
-                            pass
+            reply = await _call_xiaoyuan(full_message, session_key="storyboard-gen")
+            if reply:
+                yield f"data: {json.dumps({'text': reply}, ensure_ascii=False)}\n\n"
+        except httpx.ConnectError:
+            yield f"data: {json.dumps({'text': '⚠️ OpenClaw Gateway 未运行，请确认 openclaw gateway start 已执行'}, ensure_ascii=False)}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
-            yield "data: [DONE]\n\n"
+        yield "data: [DONE]\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 
@@ -870,7 +838,7 @@ async def insights_analyze(request: Request):
     data_summary = body.get("data_summary", "")
     focus = body.get("focus", "comprehensive")  # comprehensive / social / ad / creative
 
-    system = """你是一位顶级品牌数据策略分析师，服务于蓝色光标的「品牌AI内容工厂」平台。
+    system = """你是一位顶级品牌数据策略分析师，服务于人源活力「品牌AI内容工厂」平台。
 
 你的任务：基于社媒自然流量数据和广告投放数据，输出可操作的内容策略洞察。
 
@@ -902,7 +870,11 @@ async def insights_analyze(request: Request):
         "comprehensive": "请综合分析自然流量和付费投放数据，给出全面的内容策略建议。",
     }
 
-    user_msg = f"""以下是当前品牌内容在各平台的表现数据汇总：
+    user_msg = f"""请以品牌数据策略分析师的身份分析以下数据。
+
+{system}
+
+以下是当前品牌内容在各平台的表现数据汇总：
 
 {data_summary}
 
@@ -910,42 +882,432 @@ async def insights_analyze(request: Request):
 
     async def stream():
         try:
-            async with httpx.AsyncClient(timeout=120) as client:
-                async with client.stream(
-                    "POST",
-                    f"{CLAUDE_API_BASE}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {CLAUDE_API_KEY}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": CLAUDE_MODEL,
-                        "messages": [
-                            {"role": "system", "content": system},
-                            {"role": "user", "content": user_msg},
-                        ],
-                        "stream": True,
-                    },
-                ) as response:
-                    response.raise_for_status()
-                    async for line in response.aiter_lines():
-                        line = line.strip()
-                        if not line or not line.startswith("data: "):
-                            continue
-                        data = line[6:].strip()
-                        if data == "[DONE]":
-                            yield "data: [DONE]\n\n"
-                            break
-                        try:
-                            chunk = json.loads(data)
-                            delta = chunk["choices"][0]["delta"].get("content", "")
-                            if delta:
-                                yield f"data: {json.dumps({'text': delta}, ensure_ascii=False)}\n\n"
-                        except json.JSONDecodeError:
-                            pass
+            reply = await _call_xiaoyuan(user_msg, session_key="insight-analyze")
+            if reply:
+                yield f"data: {json.dumps({'text': reply}, ensure_ascii=False)}\n\n"
+        except httpx.ConnectError:
+            yield f"data: {json.dumps({'text': '⚠️ OpenClaw Gateway 未运行，请确认 openclaw gateway start 已执行'}, ensure_ascii=False)}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
-            yield "data: [DONE]\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+# --- Data Chat: Persistent LLM assistant for data Q&A + modifications ---
+
+def _execute_data_action(action: dict, page: str) -> dict:
+    store = social_publish_store if page == "social" else ad_campaigns_store
+    save_fn = save_social_publish if page == "social" else save_ad_campaigns
+    atype = action.get("type", "")
+    if atype == "delete":
+        deleted = 0
+        for rid in action.get("ids", []):
+            if rid in store:
+                del store[rid]
+                deleted += 1
+        if deleted:
+            save_fn()
+        return {"type": "delete", "deleted": deleted}
+    elif atype == "update":
+        rid = action.get("id")
+        if rid and rid in store:
+            for k, v in action.get("fields", {}).items():
+                if k == "metrics" and isinstance(v, dict):
+                    store[rid].setdefault("metrics", {}).update(v)
+                else:
+                    store[rid][k] = v
+            save_fn()
+            return {"type": "update", "id": rid, "success": True}
+    return {"type": atype, "success": False}
+
+
+# --- 小源 workspace (for brand knowledge + data insights used by script generation) ---
+XIAOYUAN_WORKSPACE = Path.home() / "renyuan-workspace"
+
+
+def _load_brand_knowledge() -> str:
+    """Load products.md + brand.md for script generation context."""
+    parts = []
+    for rel in ("memory/core/products.md", "memory/core/brand.md"):
+        p = XIAOYUAN_WORKSPACE / rel
+        if p.exists():
+            parts.append(p.read_text(encoding="utf-8"))
+    return "\n\n".join(parts) if parts else ""
+
+
+def _load_data_insights() -> str:
+    """Load recent data insights from 小源's daily logs (today + yesterday)."""
+    from datetime import date, timedelta
+    insights = []
+    for delta in (0, 1):
+        d = date.today() - timedelta(days=delta)
+        daily = XIAOYUAN_WORKSPACE / "memory" / "daily" / f"{d.isoformat()}.md"
+        if daily.exists():
+            text = daily.read_text(encoding="utf-8")
+            # Extract insight sections (not full log — just conclusions/summaries)
+            lines = text.split("\n")
+            snippet = []
+            for line in lines:
+                if "洞察" in line or "结论" in line or "建议" in line or "数据" in line:
+                    snippet.append(line)
+                elif snippet and line.strip():
+                    snippet.append(line)
+                elif snippet and not line.strip():
+                    snippet.append("")
+                    if len(snippet) > 3:
+                        break
+            if snippet:
+                insights.append(f"[{d.isoformat()}] " + "\n".join(snippet[:8]))
+    return "\n".join(insights) if insights else ""
+
+
+# --- Products API: products.md ↔ brands.html 双向联动 ---
+
+PRODUCTS_MD = XIAOYUAN_WORKSPACE / "memory" / "core" / "products.md"
+import re as _re
+
+
+def _parse_products_md() -> list[dict]:
+    """Parse products.md into a list of SKU dicts."""
+    if not PRODUCTS_MD.exists():
+        return []
+    text = PRODUCTS_MD.read_text(encoding="utf-8")
+    # Split by ## headings
+    chunks = _re.split(r'^## ', text, flags=_re.MULTILINE)
+    skus = []
+    for chunk in chunks[1:]:  # skip preamble
+        lines = chunk.strip().split('\n')
+        name = lines[0].strip()
+        body = '\n'.join(lines[1:])
+
+        sku: dict = {"name": name}
+
+        # Parse **field：** value pairs
+        field_map = {
+            "电商昵称": "nickname", "正式名": "formalName", "系列": "series",
+            "核心技术": "tech", "形态": "form", "适合人群": "targetUsers",
+            "使用场景": "scenes", "关键词": "keywords", "备注": "notes",
+            "规格": "spec", "价格": "price", "卖点一句话": "oneLiner",
+            "使用步骤": "steps",
+        }
+        for zh, en in field_map.items():
+            m = _re.search(rf'\*\*{zh}[：:]\*\*\s*(.*)', body)
+            if m:
+                sku[en] = m.group(1).strip()
+
+        # Parse selling points (bullet list after **核心卖点**)
+        sp_match = _re.search(r'\*\*核心卖点[：:]\*\*\s*\n((?:- .+\n?)+)', body)
+        if sp_match:
+            sku["sellingPoints"] = [l.lstrip('- ').strip() for l in sp_match.group(1).strip().split('\n') if l.strip()]
+
+        # Parse numbered selling points (### 核心卖点 section)
+        numbered_sp = _re.search(r'### 核心卖点[^#]*?\n((?:\d+\..+\n?)+)', body)
+        if numbered_sp:
+            sku["sellingPointsDetailed"] = []
+            for line in numbered_sp.group(1).strip().split('\n'):
+                line = _re.sub(r'^\d+\.\s*', '', line).strip()
+                if line:
+                    sku["sellingPointsDetailed"].append(line)
+
+        # Parse markdown tables (ingredients, competitors)
+        def parse_table(section_pattern: str) -> list[dict]:
+            m = _re.search(section_pattern + r'[\s\S]*?\n(\|.+\|(?:\n\|.+\|)*)', body)
+            if not m:
+                return []
+            table_text = m.group(1).strip()
+            rows = [r.strip() for r in table_text.split('\n') if r.strip()]
+            if len(rows) < 3:
+                return []
+            headers = [h.strip() for h in rows[0].split('|')[1:-1]]
+            # Skip separator row (contains only dashes)
+            result = []
+            for row in rows[1:]:
+                if _re.match(r'^\|[\s\-:|]+\|$', row):
+                    continue  # skip separator
+                cells = [c.strip() for c in row.split('|')[1:-1]]
+                if len(cells) == len(headers):
+                    result.append(dict(zip(headers, cells)))
+            return result
+
+        ingredients = parse_table(r'### 核心成分')
+        if not ingredients:
+            ingredients = parse_table(r'\| 成分 \|')
+        if ingredients:
+            sku["ingredients"] = ingredients
+
+        competitors = parse_table(r'### 竞品对比')
+        if not competitors:
+            competitors = parse_table(r'\| 对比维度 \|')
+        if competitors:
+            sku["competitors"] = competitors
+
+        skus.append(sku)
+    return skus
+
+
+def _sku_to_md(sku: dict) -> str:
+    """Convert a SKU dict back to markdown section (without ## heading)."""
+    lines = []
+    field_order = [
+        ("nickname", "电商昵称"), ("formalName", "正式名"), ("series", "系列"),
+        ("notes", "备注"), ("spec", "规格"), ("price", "价格"),
+        ("tech", "核心技术"), ("form", "形态"),
+    ]
+    for en, zh in field_order:
+        if sku.get(en):
+            lines.append(f"**{zh}：** {sku[en]}")
+    lines.append("")
+
+    if sku.get("sellingPoints"):
+        lines.append("**核心卖点：**")
+        for sp in sku["sellingPoints"]:
+            lines.append(f"- {sp}")
+        lines.append("")
+
+    if sku.get("ingredients"):
+        headers = list(sku["ingredients"][0].keys())
+        lines.append("### 核心成分")
+        lines.append("")
+        lines.append("| " + " | ".join(headers) + " |")
+        lines.append("|" + "|".join(["------"] * len(headers)) + "|")
+        for row in sku["ingredients"]:
+            lines.append("| " + " | ".join(row.get(h, "") for h in headers) + " |")
+        lines.append("")
+
+    if sku.get("oneLiner"):
+        lines.append(f"**卖点一句话：** {sku['oneLiner']}")
+        lines.append("")
+
+    if sku.get("sellingPointsDetailed"):
+        lines.append("### 核心卖点（视频文案用）")
+        for i, sp in enumerate(sku["sellingPointsDetailed"], 1):
+            lines.append(f"{i}. {sp}")
+        lines.append("")
+
+    simple_fields = [
+        ("steps", "使用步骤"), ("targetUsers", "适合人群"),
+        ("scenes", "使用场景"),
+    ]
+    for en, zh in simple_fields:
+        if sku.get(en):
+            lines.append(f"**{zh}：** {sku[en]}")
+
+    if sku.get("competitors"):
+        lines.append("")
+        lines.append("### 竞品对比")
+        lines.append("")
+        headers = list(sku["competitors"][0].keys())
+        lines.append("| " + " | ".join(headers) + " |")
+        lines.append("|" + "|".join(["------"] * len(headers)) + "|")
+        for row in sku["competitors"]:
+            lines.append("| " + " | ".join(row.get(h, "") for h in headers) + " |")
+
+    if sku.get("keywords"):
+        lines.append("")
+        lines.append(f"**关键词：** {sku['keywords']}")
+
+    return "\n".join(lines)
+
+
+def _save_products_md(skus: list[dict]):
+    """Write all SKUs back to products.md, preserving the file header."""
+    text = PRODUCTS_MD.read_text(encoding="utf-8") if PRODUCTS_MD.exists() else ""
+    # Extract preamble (everything before first ## )
+    first_h2 = _re.search(r'^## ', text, flags=_re.MULTILINE)
+    preamble = text[:first_h2.start()].rstrip() if first_h2 else text.rstrip()
+
+    parts = [preamble, ""]
+    for sku in skus:
+        parts.append(f"## {sku['name']}")
+        parts.append("")
+        parts.append(_sku_to_md(sku))
+        parts.append("")
+        parts.append("---")
+        parts.append("")
+    # Remove trailing ---
+    while parts and parts[-1].strip() in ("", "---"):
+        parts.pop()
+    parts.append("")  # final newline
+
+    PRODUCTS_MD.write_text("\n".join(parts), encoding="utf-8")
+
+
+@app.get("/api/products")
+async def list_products():
+    return {"success": True, "products": _parse_products_md()}
+
+
+@app.put("/api/products/{sku_name}")
+async def update_product(sku_name: str, request: Request):
+    body = await request.json()
+    skus = _parse_products_md()
+    found = False
+    for i, s in enumerate(skus):
+        if s["name"] == sku_name:
+            body["name"] = sku_name  # preserve name
+            skus[i] = body
+            found = True
+            break
+    if not found:
+        raise HTTPException(404, f"SKU not found: {sku_name}")
+    _save_products_md(skus)
+    return {"success": True}
+
+
+@app.post("/api/products")
+async def create_product(request: Request):
+    body = await request.json()
+    if not body.get("name"):
+        raise HTTPException(400, "name is required")
+    skus = _parse_products_md()
+    # Check duplicate
+    if any(s["name"] == body["name"] for s in skus):
+        raise HTTPException(409, f"SKU already exists: {body['name']}")
+    skus.append(body)
+    _save_products_md(skus)
+    return {"success": True}
+
+
+async def _call_xiaoyuan(message: str, session_key: str = "platform") -> str:
+    """Call 小源 via OpenClaw Gateway. Falls back to Claude LLM if gateway unavailable."""
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(
+                f"{OPENCLAW_GATEWAY}/api/sessions/{OPENCLAW_AGENT}/send",
+                json={"message": message, "session_key": session_key},
+            )
+            resp.raise_for_status()
+            reply = resp.json().get("reply", "")
+            if reply:
+                return reply
+    except (httpx.ConnectError, httpx.HTTPStatusError) as e:
+        print(f"[INFO] 小源不可用 ({e})，回退到 Claude LLM")
+
+    # Fallback: Claude LLM
+    async with httpx.AsyncClient(timeout=120) as client:
+        resp = await client.post(
+            f"{CLAUDE_API_BASE}/chat/completions",
+            headers={"Authorization": f"Bearer {CLAUDE_API_KEY}", "Content-Type": "application/json"},
+            json={"model": CLAUDE_MODEL, "messages": [{"role": "user", "content": message}]},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+
+# --- 真·小源 Chat (OpenClaw Gateway) ---
+
+@app.post("/api/chat")
+async def chat_with_xiaoyuan(request: Request):
+    """Forward chat messages to real 小源 agent via OpenClaw Gateway."""
+    body = await request.json()
+    user_message = body.get("message", "")
+    session_id = body.get("session_id", "web-visitor")
+    context = body.get("context", "")  # optional data context for data-chat
+
+    if not user_message:
+        raise HTTPException(status_code=400, detail="message is required")
+
+    # If data context is provided, prepend it to the message
+    full_message = user_message
+    if context:
+        full_message = f"[数据上下文]\n{context}\n\n[用户问题]\n{user_message}"
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"{OPENCLAW_GATEWAY}/api/sessions/{OPENCLAW_AGENT}/send",
+                json={
+                    "message": full_message,
+                    "session_key": session_id,
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return {"reply": data.get("reply", ""), "session_id": session_id}
+    except httpx.ConnectError:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "OpenClaw Gateway 未运行，请确认 openclaw gateway start 已执行", "session_id": session_id},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))@app.post("/api/data-chat")
+async def data_chat(request: Request):
+    """Data analysis chat — routes to real 小源 via OpenClaw Gateway with data context."""
+    body = await request.json()
+    messages = body.get("messages", [])
+    page = body.get("page", "social")
+
+    store = social_publish_store if page == "social" else ad_campaigns_store
+    id_key = "publish_id" if page == "social" else "campaign_id"
+    records = list(store.values())
+
+    # Build compact data summary
+    compact = []
+    for r in records[:200]:
+        item = {"id": r.get(id_key, ""), "title": r.get("title", ""), "platform": r.get("platform", "")}
+        if page == "social":
+            item["account"] = r.get("account_name", "")
+            item["date"] = r.get("published_at", "")
+            m = r.get("metrics", {})
+            item.update({k: m.get(k, 0) for k in ("views", "likes", "comments", "shares", "favorites", "follows", "gmv", "orders", "gpm")})
+        else:
+            item["date"] = r.get("date_start", "")
+            m = r.get("metrics", {})
+            item.update({k: m.get(k, 0) for k in ("spend", "impressions", "clicks", "conversions", "ctr", "cpa", "roas")})
+        compact.append(item)
+
+    data_json = json.dumps(compact, ensure_ascii=False)
+    page_label = "社媒发布" if page == "social" else "广告投放"
+    user_msg = messages[-1]["content"] if messages else ""
+
+    # --- Route to real 小源 via OpenClaw Gateway ---
+    data_context = f"用户正在查看{page_label}数据（共{len(records)}条）。数据如下：\n{data_json}\n\n"
+    data_context += "如需修改/删除数据，请在回复末尾嵌入操作指令：\n"
+    data_context += '删除: <!--ACTION:{"type":"delete","ids":["id1"]}-->\n'
+    data_context += '修改: <!--ACTION:{"type":"update","id":"xxx","fields":{"platform":"kuaishou"}}-->\n'
+
+    async def stream():
+        full_text = ""
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                resp = await client.post(
+                    f"{OPENCLAW_GATEWAY}/api/sessions/{OPENCLAW_AGENT}/send",
+                    json={
+                        "message": f"[数据上下文]\n{data_context}\n[用户问题]\n{user_msg}",
+                        "session_key": f"data-{page}",
+                    },
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                full_text = data.get("reply", "")
+                # Stream the complete reply as a single SSE chunk (for frontend compatibility)
+                if full_text:
+                    yield f"data: {json.dumps({'text': full_text}, ensure_ascii=False)}\n\n"
+        except httpx.ConnectError:
+            err = "⚠️ OpenClaw Gateway 未运行。请确认 `openclaw gateway start` 已执行。"
+            yield f"data: {json.dumps({'text': err}, ensure_ascii=False)}\n\n"
+            full_text = err
+        except Exception as e:
+            err = f"\n\n⚠️ 请求失败: {str(e)}"
+            yield f"data: {json.dumps({'text': err}, ensure_ascii=False)}\n\n"
+            full_text = err
+
+        # Parse and execute ACTION tags from 小源's response
+        import re
+        actions = re.findall(r'<!--ACTION:(.*?)-->', full_text)
+        executed = []
+        for act_json in actions:
+            try:
+                act = json.loads(act_json)
+                result = _execute_data_action(act, page)
+                executed.append(result)
+            except json.JSONDecodeError:
+                pass
+        if executed:
+            yield f"data: {json.dumps({'actions_executed': executed}, ensure_ascii=False)}\n\n"
+        yield "data: [DONE]\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 
@@ -975,7 +1337,8 @@ async def create_content_task(
         seg.setdefault("seedance_task_id", None)
         seg.setdefault("video_url", None)
 
-    status = "storyboard_ready" if segs else "draft"
+    has_submitted = any(s.get("status") in ("submitted", "generating") for s in segs)
+    status = "generating" if has_submitted else ("storyboard_ready" if segs else "draft")
     now = time.time()
     task = {
         "task_id": task_id,
@@ -1165,8 +1528,16 @@ async def submit_single_segment(task_id: str, seg_id: str):
 
 
 @app.post("/api/content-tasks/{task_id}/segments/{seg_id}/status")
-async def update_segment_status(task_id: str, seg_id: str, status: str = Form(...), video_url: str = Form("")):
-    """Update segment status (called by frontend after polling Seedance)."""
+async def update_segment_status(task_id: str, seg_id: str, request: Request):
+    """Update segment status (supports both JSON and Form body)."""
+    ct = request.headers.get("content-type", "")
+    if "json" in ct:
+        body = await request.json()
+    else:
+        body = dict(await request.form())
+    status = body.get("status", "")
+    video_url = body.get("video_url", "")
+
     task = content_tasks_store.get(task_id)
     if not task:
         raise HTTPException(404, f"Content task not found: {task_id}")
@@ -1189,6 +1560,73 @@ async def update_segment_status(task_id: str, seg_id: str, status: str = Form(..
     task["updated_at"] = time.time()
     save_content_tasks()
     return {"success": True}
+
+
+@app.post("/api/content-tasks/{task_id}/concat")
+async def concat_segments(task_id: str):
+    """Download all completed segment videos, concat with ffmpeg, upload to CDN."""
+    import tempfile
+    import subprocess
+
+    task = content_tasks_store.get(task_id)
+    if not task:
+        raise HTTPException(404, "Task not found")
+
+    segments = sorted(task.get("segments", []), key=lambda s: int(s.get("segment_id", 0)))
+    video_urls = [(s["segment_id"], s["video_url"]) for s in segments if s.get("status") == "completed" and s.get("video_url")]
+    if len(video_urls) < 2:
+        return {"success": False, "error": "需要至少2个已完成片段才能拼接"}
+
+    tmpdir = tempfile.mkdtemp(prefix="concat_")
+    try:
+        # Download all segment videos
+        async with httpx.AsyncClient(timeout=120, follow_redirects=True) as client:
+            paths = []
+            for seg_id, url in video_urls:
+                resp = await client.get(url)
+                resp.raise_for_status()
+                if len(resp.content) < 10000:
+                    return {"success": False, "error": f"片段{seg_id}视频链接已失效，请重新生成"}
+                fpath = os.path.join(tmpdir, f"seg_{seg_id}.mp4")
+                with open(fpath, "wb") as f:
+                    f.write(resp.content)
+                paths.append(fpath)
+
+        # Build concat list
+        list_path = os.path.join(tmpdir, "list.txt")
+        with open(list_path, "w") as f:
+            for p in paths:
+                f.write(f"file '{p}'\n")
+
+        # FFmpeg concat
+        output_path = os.path.join(tmpdir, "final.mp4")
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", list_path, "-c", "copy", output_path],
+            capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode != 0:
+            return {"success": False, "error": f"ffmpeg 失败: {result.stderr[:200]}"}
+
+        # Upload to CDN
+        final_name = f"concat_{task_id}_{int(time.time())}.mp4"
+        try:
+            cdn_url = await upload_local_to_cdn(output_path, final_name)
+        except Exception:
+            cdn_url = upload_url_to_cdn(f"file://{output_path}", wait=False)
+            if cdn_url.startswith("file://"):
+                cdn_url = ""
+
+        if not cdn_url:
+            return {"success": False, "error": "CDN 上传失败"}
+
+        # Store final URL
+        task["final_video_url"] = cdn_url
+        task["updated_at"] = time.time()
+        save_content_tasks()
+        return {"success": True, "final_video_url": cdn_url}
+    finally:
+        import shutil
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 # --- Social Publish CRUD ---
@@ -1287,70 +1725,152 @@ async def delete_social_publish(publish_id: str):
     return {"success": True}
 
 
+def _parse_num(v, default=0):
+    """Parse number from strings like '¥1,234.5', '12.3%', '-', '0秒', '26.12万'."""
+    if not v or v.strip() in ("-", "--", ""):
+        return default
+    s = v.strip().replace("¥", "").replace(",", "").replace("%", "").replace("秒", "")
+    multiplier = 1
+    if s.endswith("万"):
+        s = s[:-1]
+        multiplier = 10000
+    elif s.endswith("亿"):
+        s = s[:-1]
+        multiplier = 100000000
+    try:
+        return float(s) * multiplier
+    except (ValueError, TypeError):
+        return default
+
+
+def _is_qianchuan_csv(headers):
+    """Detect if CSV is from 千川/巨量千川 by checking for signature columns."""
+    return "作品ID" in headers and "观看次数" in headers
+
+
 @app.post("/api/social-publish/import-csv")
 async def import_social_csv(file: UploadFile = File(...)):
-    """Import social publish data from CSV.
-    Expected columns: task_id, platform, account_name, published_url, published_at,
-    views, likes, comments, shares, favorites, completion_rate, notes
-    """
+    """Import social publish data from CSV. Supports both standard format and 千川 format."""
     import csv
     import io
-    content = await file.read()
-    text = content.decode("utf-8-sig")  # Handle BOM
+    raw = await file.read()
+    text = raw.decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(text))
+    headers = reader.fieldnames or []
+    is_qc = _is_qianchuan_csv(headers)
     imported = []
+    skipped = 0
+
+    # 构建已有数据指纹集用于去重 (title + date + account)
+    existing_fps = set()
+    for r in social_publish_store.values():
+        fp = (r.get("title", ""), r.get("published_at", ""), r.get("account_name", ""))
+        existing_fps.add(fp)
+
     for row in reader:
-        task_id = row.get("task_id", "").strip()
-        task = content_tasks_store.get(task_id)
         publish_id = str(uuid.uuid4())[:8]
 
-        brand = row.get("brand", "").strip()
-        sku = row.get("sku", "").strip()
-        title = row.get("title", "").strip()
-        video_url = ""
-        if task:
-            brand = brand or task.get("brand", "")
-            sku = sku or task.get("sku", "")
-            title = title or task.get("title", "")
-            for s in task.get("segments", []):
-                if s.get("video_url"):
-                    video_url = s["video_url"]
-                    break
+        if is_qc:
+            # --- 千川格式映射 ---
+            title = row.get("作品标题", "").strip()
+            published_url = row.get("播放链接", "").strip()
+            account_name = row.get("达人昵称", "").strip()
+            douyin_id = row.get("达人抖音号", "").strip()
+            raw_date = row.get("发布时间", "").strip()
+            published_at = raw_date[:10].replace("/", "-") if raw_date else time.strftime("%Y-%m-%d")
+            views = int(_parse_num(row.get("观看次数", 0)))
+            likes = int(_parse_num(row.get("点赞数", 0)))
+            comments = int(_parse_num(row.get("评论数", 0)))
+            shares = int(_parse_num(row.get("转发数", 0)))
+            favorites = int(_parse_num(row.get("收藏数", 0)))
+            follows = int(_parse_num(row.get("点击关注次数", 0)))
+            completion_pct = _parse_num(row.get("完播率", 0))
+            completion_rate = completion_pct / 100.0 if completion_pct > 1 else completion_pct
+            avg_watch = row.get("平均观看时长", "").strip()
+            duration = row.get("作品时长", "").strip()
+            # 电商引流数据
+            gmv = _parse_num(row.get("直接成交金额", 0))
+            orders = int(_parse_num(row.get("成交订单数", 0)))
+            product_exposure = int(_parse_num(row.get("商品曝光次数", 0)))
+            product_clicks = int(_parse_num(row.get("商品点击次数", 0)))
+            gpm = _parse_num(row.get("千次观看成交金额", 0))
+            divert_gmv = _parse_num(row.get("引流成交金额", 0))
+            divert_orders = int(_parse_num(row.get("引流成交订单数", 0)))
+            record = {
+                "publish_id": publish_id, "task_id": "", "segment_ids": [],
+                "platform": "douyin",
+                "account_name": f"{account_name}({douyin_id})" if douyin_id else account_name,
+                "published_url": published_url,
+                "published_at": published_at,
+                "metrics": {
+                    "views": views, "likes": likes, "comments": comments,
+                    "shares": shares, "favorites": favorites,
+                    "completion_rate": round(completion_rate, 4),
+                    "follows": follows,
+                    "avg_watch": avg_watch,
+                    "duration": duration,
+                    "gmv": gmv,
+                    "orders": orders,
+                    "product_exposure": product_exposure,
+                    "product_clicks": product_clicks,
+                    "gpm": gpm,
+                    "divert_gmv": divert_gmv,
+                    "divert_orders": divert_orders,
+                },
+                "updated_at": time.time(),
+                "brand": "", "sku": "", "title": title, "video_url": "",
+                "notes": f"作品ID: {row.get('作品ID', '')}",
+                "extra": {
+                    "作品ID": row.get("作品ID", ""),
+                    "作品类型": row.get("作品类型", ""),
+                },
+            }
+        else:
+            # --- 标准格式 ---
+            task_id = row.get("task_id", "").strip()
+            task = content_tasks_store.get(task_id)
+            brand = row.get("brand", "").strip()
+            sku = row.get("sku", "").strip()
+            title = row.get("title", "").strip()
+            video_url = ""
+            if task:
+                brand = brand or task.get("brand", "")
+                sku = sku or task.get("sku", "")
+                title = title or task.get("title", "")
+                for s in task.get("segments", []):
+                    if s.get("video_url"):
+                        video_url = s["video_url"]; break
+            record = {
+                "publish_id": publish_id, "task_id": task_id, "segment_ids": [],
+                "platform": row.get("platform", "douyin").strip(),
+                "account_name": row.get("account_name", "").strip(),
+                "published_url": row.get("published_url", "").strip(),
+                "published_at": row.get("published_at", time.strftime("%Y-%m-%d")).strip(),
+                "metrics": {
+                    "views": int(_parse_num(row.get("views", 0))),
+                    "likes": int(_parse_num(row.get("likes", 0))),
+                    "comments": int(_parse_num(row.get("comments", 0))),
+                    "shares": int(_parse_num(row.get("shares", 0))),
+                    "favorites": int(_parse_num(row.get("favorites", 0))),
+                    "completion_rate": _parse_num(row.get("completion_rate", 0)),
+                },
+                "updated_at": time.time(),
+                "brand": brand, "sku": sku, "title": title, "video_url": video_url,
+                "notes": row.get("notes", "").strip(),
+            }
 
-        def to_float(v, default=0):
-            try:
-                return float(v)
-            except (ValueError, TypeError):
-                return default
+        # 去重检查
+        fp = (record.get("title", ""), record.get("published_at", ""), record.get("account_name", ""))
+        if fp in existing_fps:
+            skipped += 1
+            continue
+        existing_fps.add(fp)
 
-        record = {
-            "publish_id": publish_id,
-            "task_id": task_id,
-            "segment_ids": [],
-            "platform": row.get("platform", "douyin").strip(),
-            "account_name": row.get("account_name", "").strip(),
-            "published_url": row.get("published_url", "").strip(),
-            "published_at": row.get("published_at", time.strftime("%Y-%m-%d")).strip(),
-            "metrics": {
-                "views": int(to_float(row.get("views", 0))),
-                "likes": int(to_float(row.get("likes", 0))),
-                "comments": int(to_float(row.get("comments", 0))),
-                "shares": int(to_float(row.get("shares", 0))),
-                "favorites": int(to_float(row.get("favorites", 0))),
-                "completion_rate": to_float(row.get("completion_rate", 0)),
-            },
-            "updated_at": time.time(),
-            "brand": brand,
-            "sku": sku,
-            "title": title,
-            "video_url": video_url,
-            "notes": row.get("notes", "").strip(),
-        }
         social_publish_store[publish_id] = record
         imported.append(publish_id)
 
     save_social_publish()
-    return {"success": True, "imported_count": len(imported), "ids": imported}
+    return {"success": True, "imported_count": len(imported), "skipped_duplicates": skipped, "ids": imported, "format": "qianchuan" if is_qc else "standard"}
 
 
 # --- Ad Campaigns CRUD ---
@@ -1364,6 +1884,10 @@ AD_PLATFORMS = {
 @app.get("/api/ad-campaigns")
 async def list_ad_campaigns(platform: Optional[str] = None, brand: Optional[str] = None):
     records = list(ad_campaigns_store.values())
+    # 补算衍生指标（确保旧数据也有完整指标）
+    for r in records:
+        if "metrics" in r:
+            r["metrics"] = _derive_ad_metrics(r["metrics"])
     if platform:
         records = [r for r in records if r["platform"] == platform]
     if brand:
@@ -1443,68 +1967,577 @@ async def delete_ad_campaign(cid: str):
 
 @app.post("/api/ad-campaigns/import-csv")
 async def import_ad_csv(file: UploadFile = File(...)):
-    """CSV columns: task_id,platform,campaign_name,creative_name,account_name,
-    date_start,date_end,budget,spend,impressions,clicks,ctr,cpc,cpm,
-    conversions,cvr,cpa,roas,notes"""
+    """Import ad campaign data from CSV. Supports both standard format and 千川 format."""
     import csv
     import io
-    content = await file.read()
-    text = content.decode("utf-8-sig")
+    raw = await file.read()
+    text = raw.decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(text))
+    headers = reader.fieldnames or []
+    is_qc = _is_qianchuan_csv(headers)
     imported = []
+    skipped = 0
+
+    # 构建已有数据指纹集用于去重 (title + date + account)
+    existing_fps = set()
+    for r in ad_campaigns_store.values():
+        fp = (r.get("creative_name", "") or r.get("title", ""), r.get("date_start", ""), r.get("account_name", ""))
+        existing_fps.add(fp)
+
     for row in reader:
-        task_id = row.get("task_id", "").strip()
-        task = content_tasks_store.get(task_id)
         cid = str(uuid.uuid4())[:8]
 
-        brand = row.get("brand", "").strip()
-        sku = row.get("sku", "").strip()
-        title = row.get("title", "").strip()
-        video_url = ""
-        if task:
-            brand = brand or task.get("brand", "")
-            sku = sku or task.get("sku", "")
-            title = title or task.get("title", "")
-            for s in task.get("segments", []):
-                if s.get("video_url"):
-                    video_url = s["video_url"]
-                    break
+        if is_qc:
+            # --- 千川格式映射 ---
+            title = row.get("作品标题", "").strip()
+            account_name = row.get("达人昵称", "").strip()
+            douyin_id = row.get("达人抖音号", "").strip()
+            raw_date = row.get("发布时间", "").strip()
+            date_str = raw_date[:10].replace("/", "-") if raw_date else time.strftime("%Y-%m-%d")
+            spend = _parse_num(row.get("直接成交金额", 0))
+            views = int(_parse_num(row.get("观看次数", 0)))
+            clicks = int(_parse_num(row.get("商品点击次数", 0)))
+            impressions = int(_parse_num(row.get("商品曝光次数", 0)))
+            conversions = int(_parse_num(row.get("成交订单数", 0)))
+            gmv = _parse_num(row.get("直接成交金额", 0))
+            ctr = _parse_num(row.get("商品曝光点击率（次数）", 0)) / 100.0 if _parse_num(row.get("商品曝光点击率（次数）", 0)) > 1 else _parse_num(row.get("商品曝光点击率（次数）", 0))
+            cvr = _parse_num(row.get("商品点击成交率（次数）", 0)) / 100.0 if _parse_num(row.get("商品点击成交率（次数）", 0)) > 1 else _parse_num(row.get("商品点击成交率（次数）", 0))
+            gpm = _parse_num(row.get("千次观看成交金额", 0))
 
-        def fl(v, d=0):
-            try: return float(v)
-            except (ValueError, TypeError): return d
+            # Skip rows with zero views and zero GMV (no meaningful data)
+            if views == 0 and gmv == 0 and conversions == 0:
+                continue
 
-        record = {
-            "campaign_id": cid,
-            "task_id": task_id,
-            "platform": row.get("platform", "juliang").strip(),
-            "campaign_name": row.get("campaign_name", "").strip(),
-            "creative_name": row.get("creative_name", "").strip(),
-            "account_name": row.get("account_name", "").strip(),
-            "date_start": row.get("date_start", "").strip(),
-            "date_end": row.get("date_end", "").strip(),
-            "budget": fl(row.get("budget", 0)),
-            "metrics": {
-                "spend": fl(row.get("spend", 0)),
-                "impressions": int(fl(row.get("impressions", 0))),
-                "clicks": int(fl(row.get("clicks", 0))),
-                "ctr": fl(row.get("ctr", 0)),
-                "cpc": fl(row.get("cpc", 0)),
-                "cpm": fl(row.get("cpm", 0)),
-                "conversions": int(fl(row.get("conversions", 0))),
-                "cvr": fl(row.get("cvr", 0)),
-                "cpa": fl(row.get("cpa", 0)),
-                "roas": fl(row.get("roas", 0)),
-            },
-            "updated_at": time.time(),
-            "brand": brand, "sku": sku, "title": title, "video_url": video_url,
-            "notes": row.get("notes", "").strip(),
-        }
+            published_url = row.get("播放链接", "").strip()
+            record = {
+                "campaign_id": cid, "task_id": "",
+                "platform": "juliang",
+                "campaign_name": title[:40] if title else "",
+                "creative_name": title,
+                "account_name": f"{account_name}({douyin_id})" if douyin_id else account_name,
+                "published_url": published_url,
+                "date_start": date_str, "date_end": date_str,
+                "budget": 0,
+                "metrics": {
+                    "spend": spend,
+                    "impressions": impressions,
+                    "clicks": clicks,
+                    "ctr": round(ctr, 4),
+                    "cpc": round(spend / clicks, 2) if clicks > 0 else 0,
+                    "cpm": round(spend / impressions * 1000, 2) if impressions > 0 else 0,
+                    "conversions": conversions,
+                    "cvr": round(cvr, 4),
+                    "cpa": round(spend / conversions, 2) if conversions > 0 else 0,
+                    "roas": round(gmv / spend, 2) if spend > 0 else 0,
+                    # 千川特有指标
+                    "gmv": gmv,
+                    "gpm": gpm,
+                },
+                "updated_at": time.time(),
+                "brand": "", "sku": "", "title": title, "video_url": "",
+                "notes": f"作品ID: {row.get('作品ID', '')}",
+                "extra": {
+                    "作品ID": row.get("作品ID", ""),
+                    "播放链接": row.get("播放链接", ""),
+                    "发货金额": _parse_num(row.get("发货金额", 0)),
+                    "退款金额": _parse_num(row.get("退款金额", 0)),
+                    "T7结算金额": _parse_num(row.get("T-7结算金额", 0)),
+                    "预估佣金收入": _parse_num(row.get("预估佣金收入", 0)),
+                },
+            }
+        else:
+            # --- 标准格式 ---
+            task_id = row.get("task_id", "").strip()
+            task = content_tasks_store.get(task_id)
+            brand = row.get("brand", "").strip()
+            sku = row.get("sku", "").strip()
+            title = row.get("title", "").strip()
+            video_url = ""
+            if task:
+                brand = brand or task.get("brand", "")
+                sku = sku or task.get("sku", "")
+                title = title or task.get("title", "")
+                for s in task.get("segments", []):
+                    if s.get("video_url"):
+                        video_url = s["video_url"]; break
+            record = {
+                "campaign_id": cid, "task_id": task_id,
+                "platform": row.get("platform", "juliang").strip(),
+                "campaign_name": row.get("campaign_name", "").strip(),
+                "creative_name": row.get("creative_name", "").strip(),
+                "account_name": row.get("account_name", "").strip(),
+                "date_start": row.get("date_start", "").strip(),
+                "date_end": row.get("date_end", "").strip(),
+                "budget": _parse_num(row.get("budget", 0)),
+                "metrics": {
+                    "spend": _parse_num(row.get("spend", 0)),
+                    "impressions": int(_parse_num(row.get("impressions", 0))),
+                    "clicks": int(_parse_num(row.get("clicks", 0))),
+                    "ctr": _parse_num(row.get("ctr", 0)),
+                    "cpc": _parse_num(row.get("cpc", 0)),
+                    "cpm": _parse_num(row.get("cpm", 0)),
+                    "conversions": int(_parse_num(row.get("conversions", 0))),
+                    "cvr": _parse_num(row.get("cvr", 0)),
+                    "cpa": _parse_num(row.get("cpa", 0)),
+                    "roas": _parse_num(row.get("roas", 0)),
+                },
+                "updated_at": time.time(),
+                "brand": brand, "sku": sku, "title": title, "video_url": video_url,
+                "notes": row.get("notes", "").strip(),
+            }
+
+        # 补全衍生指标
+        record["metrics"] = _derive_ad_metrics(record["metrics"])
+        # 去重检查
+        fp = (record.get("creative_name", "") or record.get("title", ""), record.get("date_start", ""), record.get("account_name", ""))
+        if fp in existing_fps:
+            skipped += 1
+            continue
+        existing_fps.add(fp)
+
         ad_campaigns_store[cid] = record
         imported.append(cid)
 
     save_ad_campaigns()
-    return {"success": True, "imported_count": len(imported), "ids": imported}
+    return {"success": True, "imported_count": len(imported), "skipped_duplicates": skipped, "ids": imported, "format": "qianchuan" if is_qc else "standard"}
+
+
+# ---------------------------------------------------------------------------
+# Smart CSV Import — LLM-driven field mapping + derived metrics
+# ---------------------------------------------------------------------------
+
+SOCIAL_SCHEMA_FIELDS = (
+    "title, published_url, platform, account_name, published_at, "
+    "views, likes, comments, shares, favorites, follows, completion_rate, "
+    "duration, avg_watch_time, gmv, orders, product_exposure, product_clicks, "
+    "gpm, divert_gmv, divert_orders"
+)
+AD_SCHEMA_FIELDS = (
+    "title, published_url, platform, account_name, campaign_name, "
+    "date_start, date_end, budget, spend, impressions, clicks, conversions, "
+    "gmv, orders, views"
+)
+
+
+def _detect_encoding(raw: bytes) -> str:
+    for enc in ("utf-8-sig", "utf-8", "gbk", "gb18030"):
+        try:
+            raw.decode(enc)
+            return enc
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return "utf-8"
+
+
+def _derive_social_metrics(m: dict) -> dict:
+    views = m.get("views", 0) or 0
+    likes = m.get("likes", 0) or 0
+    comments = m.get("comments", 0) or 0
+    shares = m.get("shares", 0) or 0
+    favorites = m.get("favorites", 0) or 0
+    interact = likes + comments + shares + favorites
+    m["interact_total"] = interact
+    m["interact_rate"] = round(interact / views, 4) if views > 0 else 0
+    if views > 0 and m.get("gmv", 0):
+        m["gpm"] = m.get("gpm") or round(m["gmv"] / views * 1000, 2)
+    return m
+
+
+def _derive_ad_metrics(m: dict) -> dict:
+    spend = m.get("spend", 0) or 0
+    impressions = m.get("impressions", 0) or 0
+    clicks = m.get("clicks", 0) or 0
+    conversions = m.get("conversions", 0) or 0
+    gmv = m.get("gmv", 0) or 0
+    views = m.get("views", 0) or 0
+    # CTR = 点击/展现
+    m["ctr"] = m.get("ctr") or (round(clicks / impressions, 4) if impressions > 0 else 0)
+    # CPC = 消耗/点击  (也可由 CPM/CTR 推导)
+    m["cpc"] = m.get("cpc") or (round(spend / clicks, 2) if clicks > 0 else 0)
+    # CPM = 消耗/展现*1000
+    m["cpm"] = m.get("cpm") or (round(spend / impressions * 1000, 2) if impressions > 0 else 0)
+    # CVR = 转化/点击
+    m["cvr"] = m.get("cvr") or (round(conversions / clicks, 4) if clicks > 0 else 0)
+    # CPA = 消耗/转化  (也可由 CPC/CVR 推导)
+    m["cpa"] = m.get("cpa") or (round(spend / conversions, 2) if conversions > 0 else 0)
+    # ROAS = GMV/消耗
+    m["roas"] = m.get("roas") or (round(gmv / spend, 2) if spend > 0 else 0)
+    # GPM = GMV/播放*1000
+    m["gpm"] = m.get("gpm") or (round(gmv / views * 1000, 2) if views > 0 else 0)
+    # CPV = 消耗/播放
+    m["cpv"] = m.get("cpv") or (round(spend / views, 4) if views > 0 else 0)
+    return m
+
+
+async def _llm_map_csv(headers: list, samples: list, target: str) -> dict:
+    schema = SOCIAL_SCHEMA_FIELDS if target == "social" else AD_SCHEMA_FIELDS
+    sample_text = ""
+    for i, row in enumerate(samples):
+        sample_text += f"行{i+1}: {row}\n"
+
+    prompt = f"""你是数据工程师。分析这个CSV的列名和样本数据，将每列映射到标准字段。
+
+CSV表头（共{len(headers)}列）: {headers}
+样本数据:
+{sample_text}
+标准字段: {schema}
+
+字段映射提示（中文列名 → 标准字段）:
+- 观看次数/播放量/播放次数 → views
+- 点赞数/点赞 → likes
+- 评论数/评论 → comments
+- 转发数/分享数/分享 → shares
+- 收藏数/收藏 → favorites
+- 点击关注次数/新增关注/关注 → follows
+- 完播率 → completion_rate
+- 作品时长/时长 → duration
+- 平均观看时长/平均播放时长 → avg_watch_time
+- 直接成交金额/成交金额 → gmv
+- 成交订单数/订单数 → orders
+- 商品曝光次数/商品曝光 → product_exposure
+- 商品点击次数/商品点击 → product_clicks
+- 千次观看成交金额/GPM → gpm
+- 引流成交金额/引流GMV → divert_gmv
+- 引流成交订单数/引流订单 → divert_orders
+- 作品标题/标题 → title
+- 播放链接/视频链接 → published_url
+- 发布时间/发布日期 → published_at (社媒) 或 date_start (投放)
+- 达人昵称/账户名称/账号 → account_name
+- 消耗/花费/消费 → spend
+- 展现量/展现次数/曝光 → impressions
+- 点击量/点击次数 → clicks
+- 转化数/转化次数 → conversions
+
+返回JSON（只返回JSON，不要解释）:
+{{
+  "platform": "推断的平台标识(douyin/xiaohongshu/kuaishou/weixin/bilibili/weibo/juliang/jvguang/tengxun/ciliyinqing/baidu)",
+  "mapping": {{ "CSV列名": "标准字段名", ... }},
+  "unmapped": ["无法映射的CSV列名"],
+  "notes": "简短说明"
+}}
+
+规则:
+- 数值字段可能包含 ¥、%、万、亿、秒 等符号，映射时忽略
+- 只映射有对应标准字段的列，其余放 unmapped
+- platform 根据数据特征推断（如出现抖音链接则为 douyin）
+- 尽量映射所有能对应的列，不要遗漏"""
+
+    async with httpx.AsyncClient(timeout=90) as client:
+        resp = await client.post(
+            f"{CLAUDE_API_BASE}/chat/completions",
+            headers={"Authorization": f"Bearer {CLAUDE_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": CLAUDE_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0,
+            },
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+        # Extract JSON from possible markdown code block
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("\n", 1)[1].rsplit("```", 1)[0]
+        result = json.loads(content)
+        # Normalize platform name to English ID
+        plat_map = {"抖音": "douyin", "快手": "kuaishou", "小红书": "xiaohongshu",
+                     "微信": "weixin", "微博": "weibo", "B站": "bilibili",
+                     "千川": "douyin", "巨量引擎": "juliang", "聚光": "jvguang",
+                     "腾讯广告": "tengxun", "磁力引擎": "ciliyinqing", "百度": "baidu"}
+        raw_plat = result.get("platform", "")
+        for cn, en in plat_map.items():
+            if cn in raw_plat:
+                result["platform"] = en
+                break
+        return result
+
+
+@app.post("/api/import/smart-csv")
+async def smart_csv_import(target: str = "social", file: UploadFile = File(...)):
+    """SSE streaming: upload CSV → LLM maps fields → process rows → derive metrics → AI summary."""
+    import csv as csv_mod
+    import io
+
+    raw = await file.read()
+    enc = _detect_encoding(raw)
+    text = raw.decode(enc)
+    reader = csv_mod.DictReader(io.StringIO(text))
+    headers = reader.fieldnames or []
+    all_rows = list(reader)
+
+    def sse(evt: str, data):
+        return f"data: {json.dumps({'event': evt, **data} if isinstance(data, dict) else {'event': evt, 'text': data}, ensure_ascii=False)}\n\n"
+
+    async def stream():
+        if not headers:
+            yield sse("error", {"message": "CSV 文件为空或格式错误"})
+            yield "data: [DONE]\n\n"
+            return
+
+        # Step 1: encoding + basic info
+        yield sse("progress", f"📂 检测到文件编码: {enc.upper()}，共 {len(all_rows)} 行数据，{len(headers)} 列")
+        yield sse("progress", f"📋 表头: {', '.join(headers[:8])}{'...' if len(headers) > 8 else ''}")
+
+        # Step 2: LLM mapping
+        yield sse("progress", "🤖 正在调用 AI 分析字段映射...")
+        sample_rows = [[row.get(h, "") for h in headers] for row in all_rows[:3]]
+        try:
+            mapping_result = await _llm_map_csv(headers, sample_rows, target)
+        except Exception as e:
+            yield sse("error", {"message": f"AI 映射失败: {str(e)}"})
+            yield "data: [DONE]\n\n"
+            return
+
+        mapping = mapping_result.get("mapping", {})
+        platform_detected = mapping_result.get("platform", "douyin")
+        unmapped = mapping_result.get("unmapped", [])
+        ai_notes = mapping_result.get("notes", "")
+
+        mapped_count = len(mapping)
+        yield sse("mapping", {"platform": platform_detected, "mapped": mapped_count, "unmapped_count": len(unmapped)})
+        yield sse("progress", f"✅ AI 识别为「{platform_detected}」平台，成功映射 {mapped_count} 个字段")
+        if ai_notes:
+            yield sse("progress", f"💡 {ai_notes}")
+
+        # Step 3: process rows
+        yield sse("progress", f"⚙️ 开始处理 {len(all_rows)} 行数据...")
+        rev = {std: csv_col for csv_col, std in mapping.items() if std}
+        mapped_csv_cols = set(mapping.keys())
+        imported = []
+        skipped = 0
+        derived_count = 0
+        stats = {"total_views": 0, "total_interact": 0, "total_gmv": 0, "total_orders": 0,
+                 "total_spend": 0, "total_conversions": 0, "max_views": 0, "max_title": ""}
+
+        # 构建已有数据指纹集用于去重
+        existing_fps = set()
+        if target == "social":
+            for r in social_publish_store.values():
+                existing_fps.add((r.get("title", ""), r.get("published_at", ""), r.get("account_name", "")))
+        else:
+            for r in ad_campaigns_store.values():
+                existing_fps.add((r.get("creative_name", "") or r.get("title", ""), r.get("date_start", ""), r.get("account_name", "")))
+
+        for idx, row in enumerate(all_rows):
+            def get(field, default=""):
+                col = rev.get(field)
+                return row.get(col, default) if col else default
+
+            if target == "social":
+                pid = str(uuid.uuid4())[:8]
+                views = int(_parse_num(get("views", "0")))
+                likes = int(_parse_num(get("likes", "0")))
+                comments = int(_parse_num(get("comments", "0")))
+                shares = int(_parse_num(get("shares", "0")))
+                favorites = int(_parse_num(get("favorites", "0")))
+                follows = int(_parse_num(get("follows", "0")))
+                comp = _parse_num(get("completion_rate", "0"))
+                completion_rate = comp / 100.0 if comp > 1 else comp
+                raw_date = get("published_at", "").strip()
+                published_at = raw_date[:10].replace("/", "-") if raw_date else time.strftime("%Y-%m-%d")
+                metrics = {
+                    "views": views, "likes": likes, "comments": comments,
+                    "shares": shares, "favorites": favorites, "follows": follows,
+                    "completion_rate": round(completion_rate, 4),
+                    "duration": get("duration", "").replace("秒", "").strip() or "",
+                    "avg_watch_time": get("avg_watch_time", "").replace("秒", "").strip() or "",
+                    "gmv": _parse_num(get("gmv", "0")),
+                    "orders": int(_parse_num(get("orders", "0"))),
+                    "product_exposure": int(_parse_num(get("product_exposure", "0"))),
+                    "product_clicks": int(_parse_num(get("product_clicks", "0"))),
+                    "gpm": _parse_num(get("gpm", "0")),
+                    "divert_gmv": _parse_num(get("divert_gmv", "0")),
+                    "divert_orders": int(_parse_num(get("divert_orders", "0"))),
+                }
+                metrics = _derive_social_metrics(metrics)
+                if metrics.get("interact_rate", 0) > 0:
+                    derived_count += 1
+                extra = {"ai_mapped": True}
+                for col in headers:
+                    if col not in mapped_csv_cols and row.get(col, "").strip():
+                        extra[col] = row[col].strip()
+                record = {
+                    "publish_id": pid, "task_id": "", "segment_ids": [],
+                    "platform": platform_detected,
+                    "account_name": get("account_name", "").strip(),
+                    "published_url": get("published_url", "").strip(),
+                    "published_at": published_at,
+                    "metrics": metrics, "updated_at": time.time(),
+                    "brand": "", "sku": "", "title": get("title", "").strip(),
+                    "video_url": "", "notes": "",
+                    "extra": extra,
+                }
+                # 去重检查
+                fp = (record.get("title", ""), record.get("published_at", ""), record.get("account_name", ""))
+                if fp in existing_fps:
+                    skipped += 1
+                    continue
+                existing_fps.add(fp)
+
+                social_publish_store[pid] = record
+                imported.append(pid)
+                # Update stats
+                stats["total_views"] += views
+                stats["total_interact"] += metrics.get("interact_total", 0)
+                stats["total_gmv"] += metrics.get("gmv", 0) + metrics.get("divert_gmv", 0)
+                stats["total_orders"] += metrics.get("orders", 0) + metrics.get("divert_orders", 0)
+                if views > stats["max_views"]:
+                    stats["max_views"] = views
+                    stats["max_title"] = get("title", "")[:30]
+            else:
+                cid = str(uuid.uuid4())[:8]
+                raw_date = get("date_start", "").strip()
+                date_str = raw_date[:10].replace("/", "-") if raw_date else time.strftime("%Y-%m-%d")
+                raw_end = get("date_end", "").strip()
+                date_end = raw_end[:10].replace("/", "-") if raw_end else date_str
+                spend = _parse_num(get("spend", "0"))
+                impressions = int(_parse_num(get("impressions", "0")))
+                clicks = int(_parse_num(get("clicks", "0")))
+                conversions = int(_parse_num(get("conversions", "0")))
+                gmv = _parse_num(get("gmv", "0"))
+                views = int(_parse_num(get("views", "0")))
+                metrics = {
+                    "spend": spend, "impressions": impressions, "clicks": clicks,
+                    "conversions": conversions, "gmv": gmv, "views": views,
+                    "ctr": 0, "cpc": 0, "cpm": 0, "cvr": 0, "cpa": 0, "roas": 0, "gpm": 0,
+                }
+                metrics = _derive_ad_metrics(metrics)
+                if metrics.get("roas", 0) > 0 or metrics.get("ctr", 0) > 0:
+                    derived_count += 1
+                extra_ad = {"ai_mapped": True}
+                for col in headers:
+                    if col not in mapped_csv_cols and row.get(col, "").strip():
+                        extra_ad[col] = row[col].strip()
+                record = {
+                    "campaign_id": cid, "task_id": "",
+                    "platform": platform_detected,
+                    "campaign_name": get("campaign_name", "").strip() or get("title", "").strip()[:40],
+                    "creative_name": get("title", "").strip(),
+                    "account_name": get("account_name", "").strip(),
+                    "published_url": get("published_url", "").strip(),
+                    "date_start": date_str, "date_end": date_end,
+                    "budget": _parse_num(get("budget", "0")),
+                    "metrics": metrics, "updated_at": time.time(),
+                    "brand": "", "sku": "", "title": get("title", "").strip(),
+                    "video_url": "", "notes": "",
+                    "extra": extra_ad,
+                }
+                # 去重检查
+                fp = (record.get("creative_name", "") or record.get("title", ""), record.get("date_start", ""), record.get("account_name", ""))
+                if fp in existing_fps:
+                    skipped += 1
+                    continue
+                existing_fps.add(fp)
+
+                ad_campaigns_store[cid] = record
+                imported.append(cid)
+                stats["total_spend"] += spend
+                stats["total_gmv"] += gmv
+                stats["total_conversions"] += conversions
+                stats["total_views"] += views
+                stats["total_impressions"] = stats.get("total_impressions", 0) + impressions
+                stats["total_clicks"] = stats.get("total_clicks", 0) + clicks
+                if spend > 0 and gmv > 0:
+                    stats["avg_roas"] = stats.get("_roas_sum", 0) + gmv
+                    stats["_roas_spend"] = stats.get("_roas_spend", 0) + spend
+
+            # Progress every 100 rows
+            if (idx + 1) % 100 == 0:
+                yield sse("progress", f"⚙️ 已处理 {idx + 1}/{len(all_rows)} 行...")
+
+        # Step 4: save
+        # Compute avg ROAS for ad target
+        if target == "ad" and stats.get("_roas_spend", 0) > 0:
+            stats["avg_roas"] = round(stats.get("avg_roas", 0) / stats["_roas_spend"], 2)
+        stats.pop("_roas_sum", None)
+        stats.pop("_roas_spend", None)
+
+        if target == "social":
+            save_social_publish()
+        else:
+            save_ad_campaigns()
+
+        yield sse("progress", f"💾 数据入库完成: {len(imported)} 条记录{f'，跳过 {skipped} 条重复' if skipped else ''}，计算了 {derived_count} 条衍生指标")
+        yield sse("result", {
+            "imported_count": len(imported),
+            "skipped_duplicates": skipped,
+            "platform": platform_detected,
+            "mapped": mapped_count,
+            "derived_count": derived_count,
+            "stats": stats,
+        })
+
+        # Step 5: LLM summary
+        yield sse("progress", "🧠 正在生成 AI 数据摘要...")
+        summary_prompt = _build_summary_prompt(target, stats, len(imported), platform_detected, derived_count)
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                async with client.stream(
+                    "POST", f"{CLAUDE_API_BASE}/chat/completions",
+                    headers={"Authorization": f"Bearer {CLAUDE_API_KEY}", "Content-Type": "application/json"},
+                    json={"model": CLAUDE_MODEL, "messages": [{"role": "user", "content": summary_prompt}], "stream": True},
+                ) as resp:
+                    resp.raise_for_status()
+                    async for line in resp.aiter_lines():
+                        line = line.strip()
+                        if not line or not line.startswith("data: "):
+                            continue
+                        data = line[6:].strip()
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data)
+                            delta = chunk["choices"][0]["delta"].get("content", "")
+                            if delta:
+                                yield sse("summary", delta)
+                        except json.JSONDecodeError:
+                            pass
+        except Exception as e:
+            yield sse("summary", f"\n\n⚠️ AI 总结生成失败: {str(e)}")
+
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+def _build_summary_prompt(target, stats, count, platform, derived_count):
+    if target == "social":
+        return f"""你是品牌数据分析师。刚导入了一批社媒数据，请用中文给出简洁的数据摘要和初步洞察。
+
+数据概况:
+- 平台: {platform}
+- 导入记录: {count} 条
+- 总播放量: {stats['total_views']:,.0f}
+- 总互动量: {stats['total_interact']:,.0f}
+- 总引流GMV: ¥{stats['total_gmv']:,.2f}
+- 总引流订单: {stats['total_orders']}
+- 最高播放作品: {stats['max_title']}（{stats['max_views']:,.0f}次）
+- 自动计算衍生指标: {derived_count} 条
+
+请输出:
+1. **数据概览** — 一句话总结
+2. **关键发现** — 2-3 个数据亮点或异常
+3. **建议** — 基于数据的 1-2 条可执行建议
+保持简洁，不超过200字。"""
+    else:
+        roas = round(stats['total_gmv'] / stats['total_spend'], 2) if stats['total_spend'] > 0 else 0
+        return f"""你是品牌投放分析师。刚导入了一批广告投放数据，请用中文给出简洁的数据摘要和初步洞察。
+
+数据概况:
+- 平台: {platform}
+- 导入记录: {count} 条
+- 总消耗: ¥{stats['total_spend']:,.2f}
+- 总GMV: ¥{stats['total_gmv']:,.2f}
+- 总转化: {stats['total_conversions']}
+- 整体ROAS: {roas}
+- 总播放/展现: {stats['total_views']:,.0f}
+- 自动计算衍生指标: {derived_count} 条
+
+请输出:
+1. **数据概览** — 一句话总结
+2. **关键发现** — 2-3 个数据亮点或异常
+3. **建议** — 基于数据的 1-2 条可执行建议
+保持简洁，不超过200字。"""
 
 
 # Serve static files
