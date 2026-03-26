@@ -16,8 +16,8 @@
 /* --- Table --- */
 .ad-table-wrap { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: auto; max-height: calc(100vh - 320px); }
 .ad-table-wrap table { width: 100%; border-collapse: collapse; }
-.ad-table-wrap thead { background: var(--bg); position: sticky; top: 0; z-index: 2; }
-.ad-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; background: var(--bg); }
+.ad-table-wrap thead { background: var(--bg); }
+.ad-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; background: var(--bg); position: sticky; top: 0; z-index: 2; }
 .ad-table-wrap th:hover { color: var(--text); }
 .ad-table-wrap th .sort-icon { font-size: 10px; margin-left: 2px; opacity: 0.4; }
 .ad-table-wrap th.sorted .sort-icon { opacity: 1; color: var(--accent2); }
@@ -216,13 +216,24 @@
         <input type="number" id="adConversions" class="ad-form-input" placeholder="0" min="0">
       </div>
       <div class="ad-form-group">
+        <label class="ad-form-label">GMV (元)</label>
+        <input type="number" id="adGmv" class="ad-form-input" placeholder="0" min="0" step="0.01">
+      </div>
+      <div class="ad-form-group">
         <label class="ad-form-label">ROAS</label>
         <input type="number" id="adRoas" class="ad-form-input" placeholder="0" min="0" step="0.01">
       </div>
+    </div>
+    <div class="ad-form-row3">
       <div class="ad-form-group">
-        <label class="ad-form-label">CPA (元)</label>
-        <input type="number" id="adCpa" class="ad-form-input" placeholder="0" min="0" step="0.01">
+        <label class="ad-form-label">观看量</label>
+        <input type="number" id="adViews" class="ad-form-input" placeholder="0" min="0">
       </div>
+      <div class="ad-form-group">
+        <label class="ad-form-label">CPA (元) <span style="font-weight:400;color:var(--text-muted);">自动计算</span></label>
+        <input type="number" id="adCpa" class="ad-form-input" placeholder="自动" disabled style="background:#f9fafb;">
+      </div>
+      <div class="ad-form-group"></div>
     </div>
 
     <div class="ad-form-group">
@@ -483,15 +494,16 @@ function adShowModal(editRec) {
     document.getElementById('adImpressions').value = editRec.metrics?.impressions || 0;
     document.getElementById('adClicks').value = editRec.metrics?.clicks || 0;
     document.getElementById('adConversions').value = editRec.metrics?.conversions || 0;
+    document.getElementById('adGmv').value = editRec.metrics?.gmv || 0;
     document.getElementById('adRoas').value = editRec.metrics?.roas || 0;
-    document.getElementById('adCpa').value = editRec.metrics?.cpa || 0;
+    document.getElementById('adViews').value = editRec.metrics?.views || 0;
     document.getElementById('adNotes').value = editRec.notes || '';
   } else {
     ['adAccount','adCampaignName','adCreativeName','adNotes'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('adPlatform').value = 'juliang';
     document.getElementById('adDateStart').value = new Date().toISOString().slice(0, 10);
     document.getElementById('adDateEnd').value = '';
-    ['adBudget','adSpend','adImpressions','adClicks','adConversions','adRoas','adCpa'].forEach(id => document.getElementById(id).value = '');
+    ['adBudget','adSpend','adImpressions','adClicks','adConversions','adRoas','adGmv','adViews'].forEach(id => document.getElementById(id).value = '');
   }
   overlay.classList.add('show');
 }
@@ -518,12 +530,9 @@ async function adSave() {
       spend: spend,
       impressions: impressions,
       clicks: clicks,
-      ctr: impressions > 0 ? +(clicks / impressions * 100).toFixed(2) : 0,
-      cpc: clicks > 0 ? +(spend / clicks).toFixed(2) : 0,
-      cpm: impressions > 0 ? +(spend / impressions * 1000).toFixed(2) : 0,
       conversions: conversions,
-      cvr: clicks > 0 ? +(conversions / clicks * 100).toFixed(2) : 0,
-      cpa: parseFloat(document.getElementById('adCpa').value) || (conversions > 0 ? +(spend / conversions).toFixed(2) : 0),
+      gmv: parseFloat(document.getElementById('adGmv').value) || 0,
+      views: parseInt(document.getElementById('adViews').value) || 0,
       roas: parseFloat(document.getElementById('adRoas').value) || 0,
     },
     notes: document.getElementById('adNotes').value,

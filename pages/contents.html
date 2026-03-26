@@ -494,15 +494,20 @@ function ctStartPolling(taskId, seg) {
           const s = task.segments.find(s => String(s.segment_id) === String(seg.segment_id));
           if (s) { s.status = 'completed'; s.video_url = videoUrl; }
           // Recompute task status
-          const statuses = new Set(task.segments.map(s => s.status));
-          if ([...statuses].every(st => st === 'completed' || st === 'succeeded')) task.status = 'completed';
+          const allDone = task.segments.every(s => s.status === 'completed' || s.status === 'succeeded');
+          if (allDone) task.status = 'completed';
         }
         // Persist to backend
         const fd = new FormData();
         fd.append('status', 'completed');
         fd.append('video_url', videoUrl);
-        fetch(`/api/content-tasks/${taskId}/segments/${seg.segment_id}/status`, { method: 'POST', body: fd });
+        await fetch(`/api/content-tasks/${taskId}/segments/${seg.segment_id}/status`, { method: 'POST', body: fd });
         ctRender();
+        // Auto-concat when all segments done and 2+ segments
+        const updatedTask = ctTasks.find(t => t.task_id === taskId);
+        if (updatedTask && updatedTask.status === 'completed' && updatedTask.segments.length >= 2 && !updatedTask.final_video_url) {
+          ctAutoConcat(taskId);
+        }
 
       } else if (status === 'failed' || status === 'error') {
         clearInterval(ctPollingTimers[key]);
@@ -524,6 +529,18 @@ function ctStartPolling(taskId, seg) {
 function escHtml(t) {
   if (!t) return '';
   return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function ctAutoConcat(taskId) {
+  try {
+    const resp = await fetch(`/api/content-tasks/${taskId}/concat`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      const task = ctTasks.find(t => t.task_id === taskId);
+      if (task) task.final_video_url = data.final_video_url;
+      ctRender();
+    }
+  } catch (e) { console.error('Auto-concat failed:', e); }
 }
 
 async function ctConcat(taskId, btn) {

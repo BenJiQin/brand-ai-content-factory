@@ -16,8 +16,8 @@
 /* --- Table card --- */
 .sm-table-wrap { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: auto; max-height: calc(100vh - 320px); }
 .sm-table-wrap table { width: 100%; border-collapse: collapse; }
-.sm-table-wrap thead { background: var(--bg); position: sticky; top: 0; z-index: 2; }
-.sm-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; background: var(--bg); }
+.sm-table-wrap thead { background: var(--bg); }
+.sm-table-wrap th { padding: 10px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; background: var(--bg); position: sticky; top: 0; z-index: 2; }
 .sm-table-wrap th:hover { color: var(--text); }
 .sm-table-wrap th .sort-icon { font-size: 10px; margin-left: 2px; opacity: 0.4; }
 .sm-table-wrap th.sorted .sort-icon { opacity: 1; color: var(--accent2); }
@@ -370,6 +370,7 @@ function smRender() {
     { key: 'metrics.shares', label: '转发', width: '60px' },
     { key: 'metrics.favorites', label: '收藏', width: '60px' },
     { key: 'metrics.follows', label: '关注', width: '55px' },
+    { key: 'metrics.interact_rate', label: '互动率', width: '70px' },
     { key: 'metrics.completion_rate', label: '完播率', width: '85px' },
     { key: 'metrics.duration', label: '时长', width: '50px' },
     { key: 'metrics.gmv', label: '成交额', width: '75px' },
@@ -424,6 +425,7 @@ function smRender() {
       <td class="sm-num">${smFmt(m.shares || 0)}</td>
       <td class="sm-num">${smFmt(m.favorites || 0)}</td>
       <td class="sm-num">${smFmt(m.follows || 0)}</td>
+      <td class="sm-num" style="font-weight:500;">${((m.interact_rate || 0) * 100).toFixed(2)}%</td>
       <td><div class="sm-comp-wrap">
         <div class="sm-comp-bar"><div class="sm-comp-fill" style="width:${compPct}%;background:${compColor}"></div></div>
         <span class="sm-comp-text" style="color:${compColor}">${compPct}%</span>

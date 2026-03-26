@@ -664,10 +664,6 @@
         ></textarea>
         <div class="prompt-footer">
           <div class="prompt-actions">
-            <div class="action-chip" id="chipVideo" onclick="toggleMode('video')">🎬 视频脚本</div>
-            <div class="action-chip" id="chipImage" onclick="toggleMode('image')">🖼️ 图文种草</div>
-            <div class="action-chip" id="chipShort" onclick="toggleMode('short')">⚡ 短视频</div>
-            <div class="action-chip" id="chipStoryboard" onclick="toggleMode('storyboard')">📝 视频脚本</div>
           </div>
           <button class="generate-btn" id="generateBtn" onclick="generate()" disabled>
             <span>生成</span>
@@ -920,7 +916,6 @@
 
 <script>
 // ========== STATE ==========
-let selectedMode = null;
 let selectedAssets = new Set();
 let isGenerating = false;
 
@@ -974,20 +969,6 @@ function fillPrompt(text) {
   document.getElementById('promptInput').value = text;
   onPromptInput();
   document.getElementById('promptInput').focus();
-}
-
-// ========== MODE TOGGLE ==========
-function toggleMode(mode) {
-  if (selectedMode === mode) {
-    selectedMode = null;
-    document.getElementById('chip' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.remove('active');
-  } else {
-    ['video','image','short','storyboard'].forEach(m => {
-      document.getElementById('chip' + m.charAt(0).toUpperCase() + m.slice(1)).classList.remove('active');
-    });
-    selectedMode = mode;
-    document.getElementById('chip' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-  }
 }
 
 // ========== ASSET TOGGLE ==========
@@ -1060,11 +1041,6 @@ async function generate() {
   const prompt = document.getElementById('promptInput').value.trim();
   if (!prompt) return;
 
-  // Branch: storyboard mode goes to generateStoryboard
-  if (selectedMode === 'storyboard') {
-    return generateStoryboard(prompt);
-  }
-
   isGenerating = true;
   document.getElementById('generateBtn').disabled = true;
   currentVideoTaskId = null;
@@ -1076,21 +1052,16 @@ async function generate() {
   resultArea.classList.add('show');
   resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-  setStatus('✍️ AI 正在生成提示词...', true);
+  setStatus('🧴 小源正在生成脚本...', true);
   setProgress(5);
   document.getElementById('resultBody').innerHTML = `<div class="result-prompt-out" id="streamOutput" style="white-space:pre-wrap;font-size:13px;line-height:1.7;"></div>`;
 
-  const mode = selectedMode || 'video';
   const assets = Array.from(selectedAssets);
 
   // Determine SKU from selected assets
   const skuSet = new Set();
   assets.forEach(id => { if (assetMeta[id]) skuSet.add(assetMeta[id].sku); });
   const skuName = skuSet.size === 1 ? [...skuSet][0] : [...skuSet].join('、') || '光子瓶';
-
-  // Map mode to API mode param
-  const modeMap = { video: 'video_script', image: 'xiaohongshu', short: 'short_video' };
-  const apiMode = modeMap[mode] || 'video_script';
 
   // Build asset context with rich scene descriptions for LLM
   let assetContext = '';
@@ -1102,13 +1073,12 @@ async function generate() {
     assetContext = `\n\n已选素材及场景描述：\n${assetDescs.join('\n')}`;
   }
 
-  // === Step 1: AI generates Seedance prompt / copy ===
+  // === Step 1: 小源 generates script ===
   try {
     const formData = new FormData();
     formData.append('prompt', prompt + assetContext);
     formData.append('brand', '人源活力');
     formData.append('sku', skuName);
-    formData.append('mode', apiMode);
 
     const resp = await fetch('/api/generate/copy', { method: 'POST', body: formData });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -1141,7 +1111,7 @@ async function generate() {
     }
 
     setProgress(50);
-    setStatus('✅ 提示词生成完成 — 请检查并修改', false);
+    setStatus('✅ 脚本生成完成 — 请检查后确认生成视频', false);
 
   } catch(err) {
     setStatus('⚠️ 生成失败: ' + err.message, false);
@@ -1152,26 +1122,28 @@ async function generate() {
   }
 
   // === Show editable result + confirm button ===
-  renderEditableResult(mode, assets);
+  renderEditableResult(assets);
   isGenerating = false;
   document.getElementById('generateBtn').disabled = false;
 }
 
-function renderEditableResult(mode, assets) {
-  const modeLabel = { video: '🎬 Seedance 视频提示词', image: '🖼️ 小红书图文种草', short: '⚡ 短视频脚本' }[mode] || '🎬 Seedance 视频提示词';
-
+function renderEditableResult(assets) {
   let assetChips = '';
   assets.forEach(id => {
     const a = assetMeta[id];
     if (a) assetChips += `<div class="result-sku-chip"><img src="${a.url}" alt="${a.label}"/>${a.sku}·${a.label}</div>`;
   });
 
-  const canGenVideo = (mode === 'video' || mode === 'short') && assets.length > 0;
+  const canGenVideo = assets.length > 0;
+  const duration = estimateDuration(generatedCopyText);
+  const segCount = Math.max(1, Math.ceil(duration / 15));
+  const durationHint = `预估口播 ${duration}秒，${segCount > 1 ? `将拆分为 ${segCount} 段 × 15秒` : '单段 15秒视频'}`;
 
   document.getElementById('resultBody').innerHTML = `
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">${modeLabel}</div>
-    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">👇 你可以直接编辑下方提示词，修改后再确认生成</div>
-    <textarea id="editablePrompt" style="width:100%;min-height:180px;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;line-height:1.7;font-family:inherit;resize:vertical;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--rhc-purple)'" onblur="this.style.borderColor='var(--border)'">${escapeHtml(generatedCopyText)}</textarea>
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">🧴 小源 · 视频脚本</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">👇 你可以直接编辑下方脚本，修改后再确认生成视频</div>
+    <textarea id="editablePrompt" style="width:100%;min-height:180px;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;line-height:1.7;font-family:inherit;resize:vertical;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--rhc-purple)'" onblur="this.style.borderColor='var(--border)'" oninput="updateDurationHint()">${escapeHtml(generatedCopyText)}</textarea>
+    <div id="durationHint" style="font-size:11px;color:var(--text-muted);margin-top:6px;">⏱ ${durationHint}</div>
     ${assetChips.length > 0 ? `<div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:12px 0 8px;">📦 关联素材（将作为参考图）</div><div class="result-image-row">${assetChips}</div>` : ''}
     <div class="result-actions" style="margin-top:16px;">
       ${canGenVideo ? `<button class="result-btn primary" onclick="confirmAndGenerate()" id="confirmGenBtn">🎬 确认并生成视频</button>` : ''}
@@ -1188,6 +1160,54 @@ function renderEditableResult(mode, assets) {
   `;
 }
 
+function updateDurationHint() {
+  const text = document.getElementById('editablePrompt').value;
+  const duration = estimateDuration(text);
+  const segCount = Math.max(1, Math.ceil(duration / 15));
+  const hint = `预估口播 ${duration}秒，${segCount > 1 ? `将拆分为 ${segCount} 段 × 15秒` : '单段 15秒视频'}`;
+  const el = document.getElementById('durationHint');
+  if (el) el.textContent = '⏱ ' + hint;
+}
+
+// === Duration estimation & auto-segmentation ===
+function estimateDuration(text) {
+  const chars = text.replace(/[^\u4e00-\u9fff\w]/g, '').length;
+  return Math.max(10, Math.ceil(chars / 4));
+}
+
+function makeSegment(id, text, imageUrls) {
+  return {
+    segment_id: String(id), title: '片段' + id,
+    api_type: 'reference2video', duration: 15,
+    prompt: text.slice(0, 300),
+    negative_prompt: '', image_urls: imageUrls,
+    seedance_task_id: null, video_url: null, status: 'pending'
+  };
+}
+
+function splitTextToSegments(text, imageUrls) {
+  const totalDuration = estimateDuration(text);
+  if (totalDuration <= 15) {
+    return [makeSegment(1, text, imageUrls)];
+  }
+  const charsPerSeg = 60;
+  const segments = [];
+  const sentences = text.split(/(?<=[。！？\n])/g).filter(s => s.trim());
+  let currentChunk = '', segId = 1;
+  for (const sent of sentences) {
+    if (currentChunk.length + sent.length > charsPerSeg && currentChunk.length > 0) {
+      segments.push(makeSegment(segId++, currentChunk.trim(), imageUrls));
+      currentChunk = sent;
+    } else {
+      currentChunk += sent;
+    }
+  }
+  if (currentChunk.trim()) {
+    segments.push(makeSegment(segId++, currentChunk.trim(), imageUrls));
+  }
+  return segments.length > 0 ? segments : [makeSegment(1, text.slice(0, 300), imageUrls)];
+}
+
 // === Step 2: User confirms and triggers Seedance ===
 async function confirmAndGenerate() {
   const editedPrompt = document.getElementById('editablePrompt').value.trim();
@@ -1195,14 +1215,25 @@ async function confirmAndGenerate() {
 
   generatedCopyText = editedPrompt;
   const assets = Array.from(selectedAssets);
+  const imageUrls = assets.map(id => assetMeta[id]?.url).filter(Boolean);
   const confirmBtn = document.getElementById('confirmGenBtn');
   if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '⏳ 提交中...'; }
 
-  // Show video section
-  document.getElementById('videoSection').style.display = 'block';
-  document.getElementById('videoSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const totalDuration = estimateDuration(editedPrompt);
 
-  await startVideoGeneration(editedPrompt, assets);
+  if (totalDuration <= 15) {
+    // Short text: single segment, use original simple flow
+    document.getElementById('videoSection').style.display = 'block';
+    document.getElementById('videoSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    await startVideoGeneration(editedPrompt, assets);
+  } else {
+    // Long text: auto-split into 15s segments → multi-segment flow → concat
+    const segments = splitTextToSegments(editedPrompt, imageUrls);
+    const skuSet = new Set();
+    assets.forEach(id => { if (assetMeta[id]) skuSet.add(assetMeta[id].sku); });
+    const skuName = [...skuSet].join('、') || '';
+    await submitMultiSegments(segments, skuName, editedPrompt);
+  }
 }
 
 async function startVideoGeneration(prompt, assets) {
@@ -1227,7 +1258,7 @@ async function startVideoGeneration(prompt, assets) {
     const formData = new FormData();
     formData.append('prompt', videoPrompt);
     formData.append('image_urls', JSON.stringify(imageUrls));
-    formData.append('duration', '10');
+    formData.append('duration', '15');
     formData.append('ratio', '9:16');
     formData.append('model', '2.0');
     formData.append('audio', 'true');
@@ -1245,7 +1276,7 @@ async function startVideoGeneration(prompt, assets) {
     let contentTaskId = null;
     try {
       const ctForm = new FormData();
-      ctForm.append('title', (selectedMode === 'storyboard' ? '分镜任务' : '视频任务') + ' · ' + (skuName || '未知') + ' · ' + new Date().toLocaleDateString('zh-CN'));
+      ctForm.append('title', '视频任务 · ' + (skuName || '未知') + ' · ' + new Date().toLocaleDateString('zh-CN'));
       ctForm.append('brand', '人源活力');
       ctForm.append('sku', skuName);
       ctForm.append('script', prompt);
@@ -1254,7 +1285,7 @@ async function startVideoGeneration(prompt, assets) {
         title: skuName ? skuName + ' 视频' : '视频片段',
         prompt: videoPrompt,
         api_type: 'reference2video',
-        duration: 10,
+        duration: 15,
         status: 'submitted',
         seedance_task_id: currentVideoTaskId,
         video_url: null,
@@ -1335,146 +1366,27 @@ async function startVideoGeneration(prompt, assets) {
   }
 }
 
-// ========== STORYBOARD MODE ==========
-async function generateStoryboard(script) {
-  isGenerating = true;
-  document.getElementById('generateBtn').disabled = true;
-  generatedCopyText = '';
-
-  const resultArea = document.getElementById('resultArea');
-  resultArea.classList.add('show');
-  resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  setStatus('🎬 AI 正在生成分镜方案...', true);
-  setProgress(5);
-  document.getElementById('resultBody').innerHTML = `<div class="result-prompt-out" id="streamOutput" style="white-space:pre-wrap;font-size:13px;line-height:1.7;"></div>`;
-
-  const assets = Array.from(selectedAssets);
-  const imageUrls = assets.map(id => assetMeta[id]?.url).filter(Boolean);
-  const assetDescs = assets.map(id => {
-    const a = assetMeta[id];
-    return a ? { url: a.url, sku: a.sku, label: a.label, scene: a.scene || a.label } : null;
-  }).filter(Boolean);
-  const skuSet = new Set();
-  assets.forEach(id => { if (assetMeta[id]) skuSet.add(assetMeta[id].sku); });
-  const skuName = skuSet.size === 1 ? [...skuSet][0] : [...skuSet].join('、') || '光子瓶';
-
+async function submitMultiSegments(segments, skuName, script, storyboard) {
   try {
     const formData = new FormData();
-    formData.append('script', script);
+    formData.append('title', (segments.length > 1 ? '多段任务' : '视频任务') + ' · ' + (skuName || '未知') + ' · ' + new Date().toLocaleDateString('zh-CN'));
     formData.append('brand', '人源活力');
     formData.append('sku', skuName);
-    formData.append('asset_urls', JSON.stringify(imageUrls));
-    formData.append('asset_descriptions', JSON.stringify(assetDescs));
-    formData.append('aspect_ratio', '9:16');
-
-    const resp = await fetch('/api/generate/storyboard', { method: 'POST', body: formData });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    const outputEl = document.getElementById('streamOutput');
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if (data === '[DONE]') break;
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.error) throw new Error(parsed.error);
-          if (parsed.text) {
-            generatedCopyText += parsed.text;
-            outputEl.textContent = generatedCopyText;
-            setProgress(Math.min(45, 5 + generatedCopyText.length / 30));
-          }
-        } catch(e) { /* skip */ }
-      }
-    }
-
-    setProgress(50);
-    setStatus('✅ 分镜方案生成完成 — 请检查编辑后确认', false);
-
-  } catch(err) {
-    setStatus('⚠️ 生成失败: ' + err.message, false);
-    document.getElementById('resultBody').innerHTML = `<div style="color:#ef4444;font-size:13px;">错误：${err.message}</div>`;
-    isGenerating = false;
-    document.getElementById('generateBtn').disabled = false;
-    return;
-  }
-
-  // Show editable storyboard + confirm button
-  renderStoryboardResult(script, skuName, imageUrls);
-  isGenerating = false;
-  document.getElementById('generateBtn').disabled = false;
-}
-
-function renderStoryboardResult(originalScript, skuName, imageUrls) {
-  // Store params globally so the confirm button can access them without inline string escaping
-  window._storyboardParams = { originalScript, skuName, imageUrls };
-
-  const assets = Array.from(selectedAssets);
-  let assetChips = '';
-  assets.forEach(id => {
-    const a = assetMeta[id];
-    if (a) assetChips += `<div class="result-sku-chip"><img src="${a.url}" alt="${a.label}"/>${a.sku}·${a.label}</div>`;
-  });
-
-  document.getElementById('resultBody').innerHTML = `
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">📝 Seedance 分镜方案</div>
-    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">👇 你可以编辑分镜方案，修改后点击「确认并创建任务」</div>
-    <textarea id="editablePrompt" style="width:100%;min-height:280px;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;line-height:1.7;font-family:inherit;resize:vertical;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--rhc-purple)'" onblur="this.style.borderColor='var(--border)'">${escapeHtml(generatedCopyText)}</textarea>
-    ${assetChips.length > 0 ? `<div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:12px 0 8px;">📦 关联素材</div><div class="result-image-row">${assetChips}</div>` : ''}
-    <div class="result-actions" style="margin-top:16px;">
-      <button class="result-btn primary" onclick="confirmStoryboard()" id="confirmStoryboardBtn">📋 确认并创建任务</button>
-      <button class="result-btn primary" onclick="copyResult()">📋 复制文案</button>
-      <button class="result-btn" onclick="refine()">✦ 重新优化</button>
-      <button class="result-btn" onclick="resetResult()">↺ 重置</button>
-    </div>
-  `;
-}
-
-async function confirmStoryboard() {
-  const params = window._storyboardParams || {};
-  const originalScript = params.originalScript || '';
-  const skuName = params.skuName || '';
-  const imageUrls = params.imageUrls || [];
-
-  const storyboard = document.getElementById('editablePrompt').value.trim();
-  if (!storyboard) { alert('分镜内容为空'); return; }
-
-  const btn = document.getElementById('confirmStoryboardBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ 创建中...'; }
-
-  const segments = parseStoryboardSegments(storyboard, imageUrls);
-
-  try {
-    // Step 1: Create content task
-    const formData = new FormData();
-    formData.append('title', '分镜任务 · ' + skuName + ' · ' + new Date().toLocaleDateString('zh-CN'));
-    formData.append('brand', '人源活力');
-    formData.append('sku', skuName);
-    formData.append('script', originalScript);
-    formData.append('storyboard', storyboard);
+    formData.append('script', script || '');
+    if (storyboard) formData.append('storyboard', storyboard);
     formData.append('segments', JSON.stringify(segments));
 
     const resp = await fetch('/api/content-tasks', { method: 'POST', body: formData });
     const data = await resp.json();
     if (!data.success) {
       alert('创建失败: ' + (data.detail || ''));
-      if (btn) { btn.disabled = false; btn.textContent = '📋 确认并创建任务'; }
+      isGenerating = false;
+      document.getElementById('generateBtn').disabled = false;
       return;
     }
 
     const taskId = data.task?.task_id || data.task_id;
 
-    // Step 2: Show segment progress UI (replace the result body)
     setStatus('🎬 正在提交视频生成...', true);
     setProgress(50);
 
@@ -1492,12 +1404,11 @@ async function confirmStoryboard() {
     });
 
     document.getElementById('resultBody').innerHTML = `
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">🎬 视频生成进度</div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">🎬 视频生成进度（${segments.length}段 × 15秒）</div>
       <div id="segmentProgressList">${segHtml}</div>
       <div id="storyboardVideoResults" style="margin-top:16px;"></div>
     `;
 
-    // Step 3: Submit all segments
     const submitResp = await fetch(`/api/content-tasks/${taskId}/submit`, { method: 'POST' });
     const submitData = await submitResp.json();
     if (!submitData.success) {
@@ -1507,7 +1418,6 @@ async function confirmStoryboard() {
 
     setProgress(60);
 
-    // Step 4: Poll each segment until all done
     const segIds = segments.map(s => s.segment_id);
     const segDone = {};
     segIds.forEach(id => { segDone[id] = false; });
@@ -1533,7 +1443,6 @@ async function confirmStoryboard() {
               labelEl.textContent = '✅ 完成';
               labelEl.style.color = '#34c759';
               if (progEl) progEl.style.width = '100%';
-              // Add video player
               const container = document.getElementById('storyboardVideoResults');
               container.innerHTML += `
                 <div style="margin-bottom:12px;padding:12px;background:rgba(52,199,89,0.05);border:1px solid rgba(52,199,89,0.2);border-radius:10px;">
@@ -1569,7 +1478,6 @@ async function confirmStoryboard() {
         const progress = 60 + (completedCount / segments.length) * 40;
         setProgress(progress);
 
-        // Also poll Seedance status for generating segments
         for (const seg of currentTask.segments) {
           if (seg.seedance_task_id && seg.status !== 'completed' && seg.status !== 'failed') {
             try {
@@ -1600,7 +1508,6 @@ async function confirmStoryboard() {
           clearInterval(pollTimer);
           const completedSegs = segments.filter((_, i) => segDone[segments[i]?.segment_id]);
           if (completedSegs.length >= 2) {
-            // Auto-concat multiple segments
             setStatus('🔗 正在拼接成片...', true);
             setProgress(95);
             try {
@@ -1632,7 +1539,8 @@ async function confirmStoryboard() {
 
   } catch(e) {
     alert('创建失败: ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = '📋 确认并创建任务'; }
+    isGenerating = false;
+    document.getElementById('generateBtn').disabled = false;
   }
 }
 
